@@ -1012,7 +1012,6 @@ func TestMetricsProcessorHostnameWithPodAssociation(t *testing.T) {
 		},
 	}
 
-	// invalid ip should not be used to lookup k8s pod
 	kc.Pods["invalid-ip"] = &kube.Pod{
 		Name: "PodA",
 		Attributes: map[string]string{
@@ -1039,6 +1038,10 @@ func TestMetricsProcessorHostnameWithPodAssociation(t *testing.T) {
 			hostname: "invalid-ip",
 			expectedAttrs: map[string]string{
 				conventions.AttributeHostName: "invalid-ip",
+				"k":                           "v",
+				"1":                           "2",
+				"aa":                          "b",
+				"k8s.pod.ip":                  "invalid-ip",
 			},
 		},
 		{
