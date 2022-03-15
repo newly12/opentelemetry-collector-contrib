@@ -12,6 +12,8 @@
 
 ### 💡 Enhancements 💡
 
+- `k8sattributesprocessor`: Support metadata enrichment based on multiple attributes (#8465)
+
 ### 🧰 Bug fixes 🧰
 
 ## v0.51.0
