@@ -40,6 +40,12 @@ import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
 )
 
+func newPodIdentifier(from string, name string, value string) kube.PodIdentifier {
+	return kube.PodIdentifier{
+		kube.BuildPodIdentifierAttribute(from, name, value),
+	}
+}
+
 func newTracesProcessor(cfg config.Processor, next consumer.Traces, options ...option) (component.TracesProcessor, error) {
 	opts := append(options, withKubeClientProvider(newFakeClient))
 	return createTracesProcessorWithOptions(
@@ -378,7 +384,10 @@ func TestProcessorNoAttrs(t *testing.T) {
 
 	// pod doesn't have attrs to add
 	m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
-		kp.kc.(*fakeClient).Pods["1.1.1.1"] = &kube.Pod{Name: "PodA"}
+		pi := kube.PodIdentifier{
+			kube.BuildPodIdentifierAttribute("connection", "k8s.pod.ip", "1.1.1.1"),
+		}
+		kp.kc.(*fakeClient).Pods[pi] = &kube.Pod{Name: "PodA"}
 	})
 
 	m.testConsume(
@@ -396,7 +405,11 @@ func TestProcessorNoAttrs(t *testing.T) {
 
 	// attrs should be added now
 	m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
-		kp.kc.(*fakeClient).Pods["1.1.1.1"] = &kube.Pod{
+		pi := kube.PodIdentifier{
+			kube.BuildPodIdentifierAttribute("connection", "k8s.pod.ip", "1.1.1.1"),
+		}
+
+		kp.kc.(*fakeClient).Pods[pi] = &kube.Pod{
 			Name: "PodA",
 			Attributes: map[string]string{
 				"k":  "v",
@@ -551,13 +564,6 @@ func TestIPSourceWithPodAssociation(t *testing.T) {
 			outLabel:   "ip",
 			outValue:   "2.2.2.2",
 		},
-		{
-			name:       "Hostname",
-			labelName:  "host.name",
-			labelValue: "1.1.1.1",
-			outLabel:   "k8s.pod.ip",
-			outValue:   "1.1.1.1",
-		},
 	}
 	m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
 		kp.podAssociations = []kube.Association{
@@ -635,7 +641,7 @@ func TestPodUID(t *testing.T) {
 				},
 			},
 		}
-		kp.kc.(*fakeClient).Pods["ef10d10b-2da5-4030-812e-5f45c1531227"] = &kube.Pod{
+		kp.kc.(*fakeClient).Pods[newPodIdentifier("resource_attribute", "k8s.pod.uid", "ef10d10b-2da5-4030-812e-5f45c1531227")] = &kube.Pod{
 			Name: "PodA",
 			Attributes: map[string]string{
 				"k":  "v",
@@ -679,11 +685,10 @@ func TestProcessorAddLabels(t *testing.T) {
 	m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
 		kp.podAssociations = []kube.Association{
 			{
-				Name: "k8s.pod.ip",
 				Sources: []kube.AssociationSource{
 					{
 						From: "connection",
-						Name: "ip",
+						Name: "k8s.pod.ip",
 					},
 				},
 			},
@@ -692,7 +697,10 @@ func TestProcessorAddLabels(t *testing.T) {
 
 	for ip, attrs := range tests {
 		m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
-			kp.kc.(*fakeClient).Pods[kube.PodIdentifier(ip)] = &kube.Pod{Attributes: attrs}
+			pi := kube.PodIdentifier{
+				kube.BuildPodIdentifierAttribute("connection", "k8s.pod.ip", ip),
+			}
+			kp.kc.(*fakeClient).Pods[pi] = &kube.Pod{Attributes: attrs}
 		})
 	}
 
@@ -747,7 +755,7 @@ func TestProcessorAddContainerAttributes(t *testing.T) {
 						},
 					},
 				}
-				kp.kc.(*fakeClient).Pods[kube.PodIdentifier("19f651bc-73e4-410f-b3e9-f0241679d3b8")] = &kube.Pod{
+				kp.kc.(*fakeClient).Pods[newPodIdentifier("resource_attribute", "k8s.pod.uid", "19f651bc-73e4-410f-b3e9-f0241679d3b8")] = &kube.Pod{
 					Containers: map[string]*kube.Container{
 						"app": {
 							ImageName: "test/app",
@@ -770,7 +778,7 @@ func TestProcessorAddContainerAttributes(t *testing.T) {
 		{
 			name: "container-id-only",
 			op: func(kp *kubernetesprocessor) {
-				kp.kc.(*fakeClient).Pods[kube.PodIdentifier("1.1.1.1")] = &kube.Pod{
+				kp.kc.(*fakeClient).Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")] = &kube.Pod{
 					Containers: map[string]*kube.Container{
 						"app": {
 							Statuses: map[int]kube.ContainerStatus{
@@ -796,7 +804,7 @@ func TestProcessorAddContainerAttributes(t *testing.T) {
 		{
 			name: "container-name-mismatch",
 			op: func(kp *kubernetesprocessor) {
-				kp.kc.(*fakeClient).Pods[kube.PodIdentifier("1.1.1.1")] = &kube.Pod{
+				kp.kc.(*fakeClient).Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")] = &kube.Pod{
 					Containers: map[string]*kube.Container{
 						"app": {
 							ImageName: "test/app",
@@ -822,7 +830,7 @@ func TestProcessorAddContainerAttributes(t *testing.T) {
 		{
 			name: "container-run-id-mismatch",
 			op: func(kp *kubernetesprocessor) {
-				kp.kc.(*fakeClient).Pods[kube.PodIdentifier("1.1.1.1")] = &kube.Pod{
+				kp.kc.(*fakeClient).Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")] = &kube.Pod{
 					Containers: map[string]*kube.Container{
 						"app": {
 							ImageName: "test/app",
@@ -890,7 +898,7 @@ func TestProcessorPicksUpPassthoughPodIp(t *testing.T) {
 				},
 			},
 		}
-		kp.kc.(*fakeClient).Pods["2.2.2.2"] = &kube.Pod{
+		kp.kc.(*fakeClient).Pods[newPodIdentifier("resource_attribute", "k8s.pod.ip", "2.2.2.2")] = &kube.Pod{
 			Name: "PodA",
 			Attributes: map[string]string{
 				"k": "v",
@@ -932,7 +940,7 @@ func TestMetricsProcessorHostname(t *testing.T) {
 	kc := kp.kc.(*fakeClient)
 
 	// invalid ip should not be used to lookup k8s pod
-	kc.Pods["invalid-ip"] = &kube.Pod{
+	kc.Pods[newPodIdentifier("connection", "k8s.pod.ip", "invalid-ip")] = &kube.Pod{
 		Name: "PodA",
 		Attributes: map[string]string{
 			"k":  "v",
@@ -940,7 +948,7 @@ func TestMetricsProcessorHostname(t *testing.T) {
 			"aa": "b",
 		},
 	}
-	kc.Pods["3.3.3.3"] = &kube.Pod{
+	kc.Pods[newPodIdentifier("connection", "k8s.pod.ip", "3.3.3.3")] = &kube.Pod{
 		Name: "PodA",
 		Attributes: map[string]string{
 			"kk": "vv",
@@ -1002,17 +1010,16 @@ func TestMetricsProcessorHostnameWithPodAssociation(t *testing.T) {
 	kc := kp.kc.(*fakeClient)
 	kp.podAssociations = []kube.Association{
 		{
-			Name: "k8s.pod.ip",
 			Sources: []kube.AssociationSource{
 				{
 					From: "resource_attribute",
-					Name: "host.name",
+					Name: conventions.AttributeHostName,
 				},
 			},
 		},
 	}
 
-	kc.Pods["invalid-ip"] = &kube.Pod{
+	kc.Pods[newPodIdentifier("resource_attribute", conventions.AttributeHostName, "invalid-ip")] = &kube.Pod{
 		Name: "PodA",
 		Attributes: map[string]string{
 			"k":  "v",
@@ -1020,7 +1027,7 @@ func TestMetricsProcessorHostnameWithPodAssociation(t *testing.T) {
 			"aa": "b",
 		},
 	}
-	kc.Pods["3.3.3.3"] = &kube.Pod{
+	kc.Pods[newPodIdentifier("resource_attribute", conventions.AttributeHostName, "3.3.3.3")] = &kube.Pod{
 		Name: "PodA",
 		Attributes: map[string]string{
 			"kk": "vv",
@@ -1041,7 +1048,6 @@ func TestMetricsProcessorHostnameWithPodAssociation(t *testing.T) {
 				"k":                           "v",
 				"1":                           "2",
 				"aa":                          "b",
-				"k8s.pod.ip":                  "invalid-ip",
 			},
 		},
 		{
@@ -1049,7 +1055,6 @@ func TestMetricsProcessorHostnameWithPodAssociation(t *testing.T) {
 			hostname: "3.3.3.3",
 			expectedAttrs: map[string]string{
 				conventions.AttributeHostName: "3.3.3.3",
-				k8sIPLabelName:                "3.3.3.3",
 				"kk":                          "vv",
 			},
 		},

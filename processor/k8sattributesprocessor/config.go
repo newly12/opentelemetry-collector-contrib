@@ -15,9 +15,12 @@
 package k8sattributesprocessor // import "github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor"
 
 import (
+	"fmt"
+
 	"go.opentelemetry.io/collector/config"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/k8sconfig"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor/internal/kube"
 )
 
 // Config defines configuration for k8s attributes processor.
@@ -50,7 +53,17 @@ type Config struct {
 }
 
 func (cfg *Config) Validate() error {
-	return cfg.APIConfig.Validate()
+	if err := cfg.APIConfig.Validate(); err != nil {
+		return err
+	}
+
+	for _, assoc := range cfg.Association {
+		if len(assoc.Sources) > kube.PodIdentifierMaxLength {
+			return fmt.Errorf("too many association sources. limit is %v", kube.PodIdentifierMaxLength)
+		}
+	}
+
+	return nil
 }
 
 // ExtractConfig section allows specifying extraction rules to extract
