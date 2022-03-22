@@ -109,8 +109,8 @@ func (kp *kubernetesprocessor) processLogs(ctx context.Context, ld plog.Logs) (p
 func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pcommon.Resource) {
 	_, podIdentifierValue := extractPodID(ctx, resource.Attributes(), kp.podAssociations)
 	for i := range podIdentifierValue {
-		if podIdentifierValue[i].Source.From == "connection" && podIdentifierValue[i].Source.Name != "" {
-			resource.Attributes().InsertString(podIdentifierValue[i].Source.Name, podIdentifierValue[i].Value)
+		if podIdentifierValue[i].Source.From == "connection" && podIdentifierValue[i].Value != "" {
+			resource.Attributes().InsertString(k8sIPLabelName, podIdentifierValue[i].Value)
 		}
 	}
 	if kp.passthroughMode {
