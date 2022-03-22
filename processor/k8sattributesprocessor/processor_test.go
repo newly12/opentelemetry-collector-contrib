@@ -41,8 +41,14 @@ import (
 )
 
 func newPodIdentifier(from string, name string, value string) kube.PodIdentifier {
+	if from == kube.ConnectionSource {
+		return kube.PodIdentifier{
+			kube.PodIdentifierAttributeFromConnection(value),
+		}
+	}
+
 	return kube.PodIdentifier{
-		kube.BuildPodIdentifierAttribute(from, name, value),
+		kube.PodIdentifierAttributeFromResourceAttribute(name, value),
 	}
 }
 
@@ -385,7 +391,7 @@ func TestProcessorNoAttrs(t *testing.T) {
 	// pod doesn't have attrs to add
 	m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
 		pi := kube.PodIdentifier{
-			kube.BuildPodIdentifierAttribute("connection", "k8s.pod.ip", "1.1.1.1"),
+			kube.PodIdentifierAttributeFromConnection("1.1.1.1"),
 		}
 		kp.kc.(*fakeClient).Pods[pi] = &kube.Pod{Name: "PodA"}
 	})
@@ -406,7 +412,7 @@ func TestProcessorNoAttrs(t *testing.T) {
 	// attrs should be added now
 	m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
 		pi := kube.PodIdentifier{
-			kube.BuildPodIdentifierAttribute("connection", "k8s.pod.ip", "1.1.1.1"),
+			kube.PodIdentifierAttributeFromConnection("1.1.1.1"),
 		}
 
 		kp.kc.(*fakeClient).Pods[pi] = &kube.Pod{
@@ -688,7 +694,6 @@ func TestProcessorAddLabels(t *testing.T) {
 				Sources: []kube.AssociationSource{
 					{
 						From: "connection",
-						Name: "k8s.pod.ip",
 					},
 				},
 			},
@@ -698,7 +703,7 @@ func TestProcessorAddLabels(t *testing.T) {
 	for ip, attrs := range tests {
 		m.kubernetesProcessorOperation(func(kp *kubernetesprocessor) {
 			pi := kube.PodIdentifier{
-				kube.BuildPodIdentifierAttribute("connection", "k8s.pod.ip", ip),
+				kube.PodIdentifierAttributeFromConnection(ip),
 			}
 			kp.kc.(*fakeClient).Pods[pi] = &kube.Pod{Attributes: attrs}
 		})
