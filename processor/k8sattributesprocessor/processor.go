@@ -118,7 +118,7 @@ func (kp *kubernetesprocessor) processResource(ctx context.Context, resource pco
 		return
 	}
 
-	if len(podIdentifierValue) > 0 {
+	if podIdentifierValue.IsNotEmpty() {
 		if pod, ok := kp.kc.GetPod(podIdentifierValue); ok {
 			for key, val := range pod.Attributes {
 				resource.Attributes().InsertString(key, val)
