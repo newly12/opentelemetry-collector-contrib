@@ -99,7 +99,6 @@ func podAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interfac
 	assert.Equal(t, got.Address, "2.2.2.2")
 	assert.Equal(t, got.Name, "podC")
 	assert.Equal(t, got.PodUID, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
-
 }
 
 func namespaceAddAndUpdateTest(t *testing.T, c *WatchClient, handler func(obj interface{})) {
@@ -207,16 +206,25 @@ func TestPodHostNetwork(t *testing.T) {
 	c, _ := newTestClient(t)
 	assert.Equal(t, 0, len(c.Pods))
 
+	// given a pod without rules matched, will not be added
 	pod := &api_v1.Pod{}
 	pod.Name = "podA"
 	pod.Status.PodIP = "1.1.1.1"
 	pod.Spec.HostNetwork = true
 	c.handlePodAdd(pod)
+	assert.Equal(t, len(c.Pods), 0)
+
+	pod.Name = "podB"
+	pod.Status.PodIP = "2.2.2.2"
+	pod.UID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+	pod.Spec.HostNetwork = true
+	c.handlePodAdd(pod)
 	assert.Equal(t, len(c.Pods), 1)
-	got := c.Pods[newPodIdentifier("connection", "k8s.pod.ip", "1.1.1.1")]
-	assert.Equal(t, got.Address, "1.1.1.1")
-	assert.Equal(t, got.Name, "podA")
-	assert.True(t, got.Ignore)
+	got := c.Pods[newPodIdentifier("resource_attribute", "k8s.pod.uid", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")]
+	assert.Equal(t, got.Address, "2.2.2.2")
+	assert.Equal(t, got.Name, "podB")
+	assert.Equal(t, got.PodUID, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+	assert.False(t, got.Ignore)
 }
 
 func TestPodAddOutOfSync(t *testing.T) {
@@ -770,7 +778,7 @@ func TestPodIgnorePatterns(t *testing.T) {
 		ignore: false,
 		pod:    api_v1.Pod{},
 	}, {
-		ignore: true,
+		ignore: false,
 		pod: api_v1.Pod{
 			Spec: api_v1.PodSpec{
 				HostNetwork: true,
@@ -1169,7 +1177,7 @@ func newTestClientWithRulesAndFilters(t *testing.T, e ExtractionRules, f Filters
 		{
 			Sources: []AssociationSource{
 				{
-					From: "connection",
+					From: ConnectionSource,
 				},
 			},
 		},
