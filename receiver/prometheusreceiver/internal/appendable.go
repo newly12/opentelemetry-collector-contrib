@@ -48,7 +48,7 @@ func NewAppendable(
 	externalLabels labels.Labels) storage.Appendable {
 	var jobsMap *JobsMap
 	if !useStartTimeMetric {
-		jobsMap = NewJobsMap(gcInterval)
+		jobsMap = NewJobsMap(gcInterval, set, receiverID)
 	}
 	return &appendable{
 		sink:                 sink,

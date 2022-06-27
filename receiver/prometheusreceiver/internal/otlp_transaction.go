@@ -22,8 +22,11 @@ import (
 	"github.com/prometheus/prometheus/model/exemplar"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/storage"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/config/configtelemetry"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/obsreport"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -49,6 +52,8 @@ type transaction struct {
 	jobsMap              *JobsMap
 	obsrecv              *obsreport.Receiver
 	startTimeMs          int64
+	receiverID           config.ComponentID
+	settings             component.ReceiverCreateSettings
 }
 
 func newTransaction(
@@ -68,6 +73,8 @@ func newTransaction(
 		useStartTimeMetric:   useStartTimeMetric,
 		startTimeMetricRegex: startTimeMetricRegex,
 		externalLabels:       externalLabels,
+		receiverID:           receiverID,
+		settings:             settings,
 		logger:               settings.Logger,
 		obsrecv:              obsreport.NewReceiver(obsreport.ReceiverSettings{ReceiverID: receiverID, Transport: transport, ReceiverCreateSettings: settings}),
 	}
@@ -126,6 +133,21 @@ func (t *transaction) initTransaction(labels labels.Labels) error {
 }
 
 func (t *transaction) Commit() error {
+	if t.settings.TelemetrySettings.MetricsLevel == configtelemetry.LevelDetailed {
+		var totalInitial, totalPrevious int
+		for _, jm := range t.jobsMap.jobsMap {
+			for _, ts := range jm.tsiMap {
+				// TODO based on metrics type
+				totalInitial += getLen(ts.initial)
+				totalPrevious += getLen(ts.previous)
+			}
+		}
+		ctx1, _ := tag.New(context.TODO(), tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "previous"))
+		stats.Record(ctx1, jobsMapTsTotal.M(int64(totalPrevious)))
+		ctx2, _ := tag.New(context.TODO(), tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "initial"))
+		stats.Record(ctx2, jobsMapTsTotal.M(int64(totalInitial)))
+	}
+
 	if t.isNew {
 		return nil
 	}

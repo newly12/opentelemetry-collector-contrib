@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver/internal"
 	_ "github.com/prometheus/prometheus/discovery/install" // init() of this package registers service discovery impl.
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
@@ -34,6 +35,7 @@ var errRenamingDisallowed = errors.New("metric renaming using metric_relabel_con
 
 // NewFactory creates a new Prometheus receiver factory.
 func NewFactory() component.ReceiverFactory {
+	internal.RegisterView()
 	return component.NewReceiverFactory(
 		typeStr,
 		createDefaultConfig,

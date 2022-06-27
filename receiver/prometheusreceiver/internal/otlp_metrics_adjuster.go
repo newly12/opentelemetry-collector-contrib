@@ -15,11 +15,17 @@
 package internal // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver/internal"
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
+	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/collector/config"
+	"go.opentelemetry.io/collector/config/configtelemetry"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/zap"
@@ -145,15 +151,21 @@ type JobsMap struct {
 	gcInterval time.Duration
 	lastGC     time.Time
 	jobsMap    map[string]*timeseriesMap
+	set        component.ReceiverCreateSettings
+	id         config.ComponentID
 }
 
 // NewJobsMap creates a new (empty) JobsMap.
-func NewJobsMap(gcInterval time.Duration) *JobsMap {
-	return &JobsMap{gcInterval: gcInterval, lastGC: time.Now(), jobsMap: make(map[string]*timeseriesMap)}
+func NewJobsMap(gcInterval time.Duration, set component.ReceiverCreateSettings, id config.ComponentID) *JobsMap {
+	return &JobsMap{gcInterval: gcInterval, lastGC: time.Now(), jobsMap: make(map[string]*timeseriesMap), set: set, id: id}
 }
 
 // Remove jobs and timeseries that have aged out.
 func (jm *JobsMap) gc() {
+	if jm.set.TelemetrySettings.MetricsLevel == configtelemetry.LevelDetailed {
+		ctx, _ := tag.New(context.TODO(), tag.Insert(serviceIdKey, jm.id.String()))
+		stats.Record(ctx, jobsMapGcTotal.M(int64(1)))
+	}
 	jm.Lock()
 	defer jm.Unlock()
 	// once the structure is locked, confirm that gc() is still necessary
