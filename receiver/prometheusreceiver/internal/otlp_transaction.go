@@ -137,14 +137,14 @@ func (t *transaction) Commit() error {
 		var totalInitial, totalPrevious int
 		for _, jm := range t.jobsMap.jobsMap {
 			for _, ts := range jm.tsiMap {
-				// TODO based on metrics type
 				totalInitial += getLen(ts.initial)
 				totalPrevious += getLen(ts.previous)
 			}
 		}
-		ctx1, _ := tag.New(context.TODO(), tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "previous"))
+		todo := context.TODO()
+		ctx1, _ := tag.New(todo, tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "previous"))
 		stats.Record(ctx1, jobsMapTsTotal.M(int64(totalPrevious)))
-		ctx2, _ := tag.New(context.TODO(), tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "initial"))
+		ctx2, _ := tag.New(todo, tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "initial"))
 		stats.Record(ctx2, jobsMapTsTotal.M(int64(totalInitial)))
 	}
 
@@ -155,7 +155,14 @@ func (t *transaction) Commit() error {
 	t.startTimeMs = -1
 
 	ctx := t.obsrecv.StartMetricsOp(t.ctx)
-	metricsL, numPoints, _, err := t.metricBuilder.Build()
+	metricsL, numPoints, numDroppedPoints, err := t.metricBuilder.Build()
+	t.logger.Debug("build metrics",
+		zap.Int("numPoints", numPoints),
+		zap.Int("numDroppedPoints", numDroppedPoints),
+		zap.Int("t.metricBuilder.metrics.Len()", t.metricBuilder.metrics.Len()),
+	)
+
+	// TODO detailed metrics?
 	if err != nil {
 		t.obsrecv.EndMetricsOp(ctx, dataformat, 0, err)
 		return err

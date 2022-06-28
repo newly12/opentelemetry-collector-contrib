@@ -177,6 +177,7 @@ func (b *metricBuilder) AddDataPoint(ls labels.Labels, t int64, v float64) error
 
 	b.hasData = true
 
+	// TODO b.families cleanup ?
 	curMF, ok := b.families[metricName]
 	if !ok {
 		familyName := normalizeMetricName(metricName)
@@ -187,6 +188,10 @@ func (b *metricBuilder) AddDataPoint(ls labels.Labels, t int64, v float64) error
 			b.families[curMF.name] = curMF
 		}
 	}
+
+	b.logger.Debug("total metrics in builder families",
+		zap.Int("len(b.families)", len(b.families)),
+	)
 
 	return curMF.Add(metricName, ls, t, v)
 }
