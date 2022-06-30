@@ -165,6 +165,7 @@ func (jm *JobsMap) gc() {
 	if jm.set.TelemetrySettings.MetricsLevel == configtelemetry.LevelDetailed {
 		ctx, _ := tag.New(context.Background(), tag.Insert(serviceIdKey, jm.id.String()))
 		stats.Record(ctx, jobsMapGcTotal.M(int64(1)))
+		jm.set.Logger.Debug("JobsMap GC")
 	}
 	jm.Lock()
 	defer jm.Unlock()

@@ -146,6 +146,10 @@ func (t *transaction) Commit() error {
 		stats.Record(ctx1, jobsMapTsTotal.M(int64(totalPrevious)))
 		ctx2, _ := tag.New(todo, tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "initial"))
 		stats.Record(ctx2, jobsMapTsTotal.M(int64(totalInitial)))
+		t.logger.Info("total series in jobsMap",
+			zap.Int("previous", totalPrevious),
+			zap.Int("initial", totalInitial),
+		)
 	}
 
 	if t.isNew {
