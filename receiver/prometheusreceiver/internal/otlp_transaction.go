@@ -137,11 +137,11 @@ func (t *transaction) Commit() error {
 		var totalInitial, totalPrevious int
 		for _, jm := range t.jobsMap.jobsMap {
 			for _, ts := range jm.tsiMap {
-				totalInitial += getLen(ts.initial)
-				totalPrevious += getLen(ts.previous)
+				totalInitial += Len(ts.initial)
+				totalPrevious += Len(ts.previous)
 			}
 		}
-		todo := context.TODO()
+		todo := context.Background()
 		ctx1, _ := tag.New(todo, tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "previous"))
 		stats.Record(ctx1, jobsMapTsTotal.M(int64(totalPrevious)))
 		ctx2, _ := tag.New(todo, tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "initial"))

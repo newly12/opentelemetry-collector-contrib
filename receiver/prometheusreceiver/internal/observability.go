@@ -56,7 +56,7 @@ func RegisterView() {
 	})
 }
 
-func getLen(m *pmetric.Metric) int {
+func Len(m *pmetric.Metric) int {
 	var total int
 	switch m.DataType() {
 	case pmetric.MetricDataTypeGauge:

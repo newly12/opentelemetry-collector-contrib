@@ -163,7 +163,7 @@ func NewJobsMap(gcInterval time.Duration, set component.ReceiverCreateSettings, 
 // Remove jobs and timeseries that have aged out.
 func (jm *JobsMap) gc() {
 	if jm.set.TelemetrySettings.MetricsLevel == configtelemetry.LevelDetailed {
-		ctx, _ := tag.New(context.TODO(), tag.Insert(serviceIdKey, jm.id.String()))
+		ctx, _ := tag.New(context.Background(), tag.Insert(serviceIdKey, jm.id.String()))
 		stats.Record(ctx, jobsMapGcTotal.M(int64(1)))
 	}
 	jm.Lock()
