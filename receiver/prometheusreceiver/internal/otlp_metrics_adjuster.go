@@ -15,14 +15,11 @@
 package internal // import "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver/internal"
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configtelemetry"
@@ -163,8 +160,9 @@ func NewJobsMap(gcInterval time.Duration, set component.ReceiverCreateSettings, 
 // Remove jobs and timeseries that have aged out.
 func (jm *JobsMap) gc() {
 	if jm.set.TelemetrySettings.MetricsLevel == configtelemetry.LevelDetailed {
-		ctx, _ := tag.New(context.Background(), tag.Insert(serviceIdKey, jm.id.String()))
-		stats.Record(ctx, jobsMapGcTotal.M(int64(1)))
+		// ctx, _ := tag.New(context.Background(), tag.Insert(serviceIdKey, jm.id.String()))
+		// stats.Record(ctx, jobsMapGcTotal.M(int64(1)))
+		jobsMapGcTotal.WithLabelValues(jm.id.String()).Inc()
 		jm.set.Logger.Debug("JobsMap GC")
 	}
 	jm.Lock()

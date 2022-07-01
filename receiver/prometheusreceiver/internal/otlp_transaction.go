@@ -22,8 +22,6 @@ import (
 	"github.com/prometheus/prometheus/model/exemplar"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/storage"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configtelemetry"
@@ -141,13 +139,13 @@ func (t *transaction) Commit() error {
 				totalPrevious += Len(ts.previous)
 			}
 		}
-		todo := context.Background()
-		ctx1, _ := tag.New(todo, tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "previous"))
-		stats.Record(ctx1, jobsMapTsTotal.M(int64(totalPrevious)))
+		// todo := context.Background()
+		// ctx1, _ := tag.New(todo, tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "previous"))
+		// stats.Record(ctx1, jobsMapTsTotal.M(int64(totalPrevious)))
 		jobsMapTimeSeries.WithLabelValues(t.receiverID.String(), "previous").Set(float64(totalPrevious))
-		ctx2, _ := tag.New(todo, tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "initial"))
+		// ctx2, _ := tag.New(todo, tag.Insert(serviceIdKey, t.receiverID.String()), tag.Insert(tsLocationKey, "initial"))
+		// stats.Record(ctx2, jobsMapTsTotal.M(int64(totalInitial)))
 		jobsMapTimeSeries.WithLabelValues(t.receiverID.String(), "initial").Set(float64(totalInitial))
-		stats.Record(ctx2, jobsMapTsTotal.M(int64(totalInitial)))
 		t.logger.Info("total series in jobsMap",
 			zap.Int("previous", totalPrevious),
 			zap.Int("initial", totalInitial),

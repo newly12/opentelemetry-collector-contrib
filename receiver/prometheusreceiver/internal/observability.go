@@ -18,52 +18,59 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
-	"go.opencensus.io/tag"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
 var (
 	once sync.Once
 
-	jobsMapGcTotal = stats.Int64("jobs_map_gc_total", "total gc done by jobs map", stats.UnitDimensionless)
-	jobsMapTsTotal = stats.Int64("jobs_map_timeseries_total", "total timeseries held by jobs map", stats.UnitDimensionless)
-
-	serviceIdKey  = tag.MustNewKey("service_instance_id")
-	tsLocationKey = tag.MustNewKey("timeseries_location")
+	// jobsMapGcTotal = stats.Int64("jobs_map_gc_total", "total gc done by jobs map", stats.UnitDimensionless)
+	// jobsMapTsTotal = stats.Int64("jobs_map_timeseries_total", "total timeseries held by jobs map", stats.UnitDimensionless)
+	//
+	// serviceIdKey  = tag.MustNewKey("service_instance_id")
+	// tsLocationKey = tag.MustNewKey("timeseries_location")
 
 	jobsMapTimeSeries = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
+			Name: "jobs_map_timeseries_total",
+			Help: "total timeseries held by jobs map",
+		},
+		[]string{"receiver", "timeseries_location"},
+	)
+
+	jobsMapGcTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
 			Name: "jobs_map_gc_total",
 			Help: "total gc done by jobs map",
 		},
-		[]string{"receiver", "timeseries_location"},
+		[]string{"receiver"},
 	)
 )
 
 func RegisterView() {
 	views := []*view.View{
-		{
-			Name:        jobsMapGcTotal.Name(),
-			Description: jobsMapGcTotal.Description(),
-			TagKeys:     []tag.Key{serviceIdKey},
-			Measure:     jobsMapGcTotal,
-			Aggregation: view.Sum(),
-		},
-		{
-			Name:        jobsMapTsTotal.Name(),
-			Description: jobsMapTsTotal.Description(),
-			TagKeys:     []tag.Key{serviceIdKey, tsLocationKey},
-			Measure:     jobsMapTsTotal,
-			Aggregation: view.Sum(),
-		},
+		// {
+		// 	Name:        jobsMapGcTotal.Name(),
+		// 	Description: jobsMapGcTotal.Description(),
+		// 	TagKeys:     []tag.Key{serviceIdKey},
+		// 	Measure:     jobsMapGcTotal,
+		// 	Aggregation: view.Sum(),
+		// },
+		// {
+		// 	Name:        jobsMapTsTotal.Name(),
+		// 	Description: jobsMapTsTotal.Description(),
+		// 	TagKeys:     []tag.Key{serviceIdKey, tsLocationKey},
+		// 	Measure:     jobsMapTsTotal,
+		// 	Aggregation: view.Sum(),
+		// },
 	}
 
 	once.Do(func() {
 		view.Register(views...)
 		prometheus.MustRegister(
 			jobsMapTimeSeries,
+			jobsMapGcTotal,
 		)
 	})
 }
