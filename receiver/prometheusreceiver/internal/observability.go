@@ -17,6 +17,7 @@ package internal
 import (
 	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -31,6 +32,14 @@ var (
 
 	serviceIdKey  = tag.MustNewKey("service_instance_id")
 	tsLocationKey = tag.MustNewKey("timeseries_location")
+
+	jobsMapTimeSeries = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "jobs_map_gc_total",
+			Help: "total gc done by jobs map",
+		},
+		[]string{"receiver", "timeseries_location"},
+	)
 )
 
 func RegisterView() {
@@ -53,6 +62,9 @@ func RegisterView() {
 
 	once.Do(func() {
 		view.Register(views...)
+		prometheus.MustRegister(
+			jobsMapTimeSeries,
+		)
 	})
 }
 
