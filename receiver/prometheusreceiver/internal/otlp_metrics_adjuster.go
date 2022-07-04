@@ -128,6 +128,7 @@ func (tsm *timeseriesMap) gc() {
 	for ts, tsi := range tsm.tsiMap {
 		if !tsi.mark {
 			delete(tsm.tsiMap, ts)
+			TsiMapGcDeletedTotal.WithLabelValues("").Inc()
 		} else {
 			tsi.mark = false
 		}
@@ -176,6 +177,7 @@ func (jm *JobsMap) gc() {
 			tsm.RUnlock()
 			if tsmNotMarked {
 				delete(jm.jobsMap, sig)
+				jobsMapGcDeletedTotal.WithLabelValues("").Inc()
 			} else {
 				// a full lock will be obtained in here, if required.
 				tsm.gc()

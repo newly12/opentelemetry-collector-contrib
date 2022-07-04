@@ -46,6 +46,20 @@ var (
 		},
 		[]string{"receiver"},
 	)
+	jobsMapGcDeletedTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "jobs_map_gc_deleted_total",
+			Help: "",
+		},
+		[]string{"receiver"},
+	)
+	TsiMapGcDeletedTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "tsi_map_gc_deleted_total",
+			Help: "",
+		},
+		[]string{"receiver"},
+	)
 
 	metricsGroupCreatedTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -87,6 +101,8 @@ func RegisterView() {
 		prometheus.MustRegister(
 			jobsMapTimeSeries,
 			jobsMapGcTotal,
+			jobsMapGcDeletedTotal,
+			TsiMapGcDeletedTotal,
 			metricsGroupCreatedTotal,
 			toMetricTotal,
 		)
