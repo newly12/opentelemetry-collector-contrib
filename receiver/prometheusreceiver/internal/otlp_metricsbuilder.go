@@ -184,14 +184,22 @@ func (b *metricBuilder) AddDataPoint(ls labels.Labels, t int64, v float64) error
 		if mf, ok := b.families[familyName]; ok && mf.includesMetric(metricName) {
 			curMF = mf
 		} else {
+			metricsGroupCreatedTotal.WithLabelValues().Inc()
 			curMF = newMetricFamily(metricName, b.mc, b.logger)
 			b.families[curMF.name] = curMF
 		}
 	}
 
+	// TODO total in b.familieis
 	b.logger.Debug("total metrics in builder families",
 		zap.Int("len(b.families)", len(b.families)),
 	)
+
+	for _, mf := range b.families {
+		ts, dts := mf.ToMetric(&b.metrics)
+		b.numTimeseries += ts
+		b.droppedTimeseries += dts
+	}
 
 	return curMF.Add(metricName, ls, t, v)
 }

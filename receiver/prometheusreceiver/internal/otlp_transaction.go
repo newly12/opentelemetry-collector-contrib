@@ -16,6 +16,7 @@ package internal // import "github.com/open-telemetry/opentelemetry-collector-co
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -63,7 +64,7 @@ func newTransaction(
 	sink consumer.Metrics,
 	externalLabels labels.Labels,
 	settings component.ReceiverCreateSettings) *transaction {
-	return &transaction{
+	t := &transaction{
 		ctx:                  ctx,
 		isNew:                true,
 		sink:                 sink,
@@ -76,6 +77,8 @@ func newTransaction(
 		logger:               settings.Logger,
 		obsrecv:              obsreport.NewReceiver(obsreport.ReceiverSettings{ReceiverID: receiverID, Transport: transport, ReceiverCreateSettings: settings}),
 	}
+	settings.Logger.Info("newTransaction", zap.String("address", fmt.Sprintf("%p", t)))
+	return t
 }
 
 // Append always returns 0 to disable label caching.
