@@ -38,6 +38,13 @@ var (
 		},
 		[]string{"receiver", "timeseries_location"},
 	)
+	familiesTotal = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "metrics_builder_families",
+			Help: "total timeseries held by jobs map",
+		},
+		[]string{"receiver"},
+	)
 
 	jobsMapGcTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -65,6 +72,13 @@ var (
 		prometheus.CounterOpts{
 			Name: "metrics_group_created_total",
 			Help: "total created metrics group",
+		},
+		[]string{"receiver"},
+	)
+	metricsFamilyAddedTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "metrics_family_added_total",
+			Help: "",
 		},
 		[]string{"receiver"},
 	)
@@ -100,7 +114,9 @@ func RegisterView() {
 		view.Register(views...)
 		prometheus.MustRegister(
 			jobsMapTimeSeries,
+			familiesTotal,
 			jobsMapGcTotal,
+			metricsFamilyAddedTotal,
 			jobsMapGcDeletedTotal,
 			TsiMapGcDeletedTotal,
 			metricsGroupCreatedTotal,
