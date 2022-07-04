@@ -54,6 +54,14 @@ var (
 		},
 		[]string{"receiver"},
 	)
+
+	toMetricTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "to_metric_created_total",
+			Help: "total created metrics group",
+		},
+		[]string{"type", "status"},
+	)
 )
 
 func RegisterView() {
@@ -80,6 +88,7 @@ func RegisterView() {
 			jobsMapTimeSeries,
 			jobsMapGcTotal,
 			metricsGroupCreatedTotal,
+			toMetricTotal,
 		)
 	})
 }

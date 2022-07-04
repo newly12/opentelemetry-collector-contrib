@@ -344,6 +344,9 @@ func (mf *metricFamily) ToMetric(metrics *pmetric.MetricSlice) (int, int) {
 		for _, mg := range mf.getGroups() {
 			if !mg.toDistributionPoint(mf.labelKeysOrdered, &hdpL) {
 				mf.droppedTimeseries++
+				toMetricTotal.WithLabelValues("distribution", "failed").Inc()
+			} else {
+				toMetricTotal.WithLabelValues("distribution", "successful").Inc()
 			}
 		}
 		pointCount = hdpL.Len()
@@ -354,6 +357,9 @@ func (mf *metricFamily) ToMetric(metrics *pmetric.MetricSlice) (int, int) {
 		for _, mg := range mf.getGroups() {
 			if !mg.toSummaryPoint(mf.labelKeysOrdered, &sdpL) {
 				mf.droppedTimeseries++
+				toMetricTotal.WithLabelValues("summary", "failed").Inc()
+			} else {
+				toMetricTotal.WithLabelValues("summary", "successful").Inc()
 			}
 		}
 		pointCount = sdpL.Len()
@@ -366,6 +372,9 @@ func (mf *metricFamily) ToMetric(metrics *pmetric.MetricSlice) (int, int) {
 		for _, mg := range mf.getGroups() {
 			if !mg.toNumberDataPoint(mf.labelKeysOrdered, &sdpL) {
 				mf.droppedTimeseries++
+				toMetricTotal.WithLabelValues("sum", "failed").Inc()
+			} else {
+				toMetricTotal.WithLabelValues("sum", "successful").Inc()
 			}
 		}
 		pointCount = sdpL.Len()
@@ -377,6 +386,9 @@ func (mf *metricFamily) ToMetric(metrics *pmetric.MetricSlice) (int, int) {
 		for _, mg := range mf.getGroups() {
 			if !mg.toNumberDataPoint(mf.labelKeysOrdered, &gdpL) {
 				mf.droppedTimeseries++
+				toMetricTotal.WithLabelValues("gauge", "failed").Inc()
+			} else {
+				toMetricTotal.WithLabelValues("gauge", "successful").Inc()
 			}
 		}
 		pointCount = gdpL.Len()
