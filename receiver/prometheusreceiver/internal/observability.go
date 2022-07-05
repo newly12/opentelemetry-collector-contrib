@@ -67,12 +67,12 @@ var (
 		},
 		[]string{"receiver"},
 	)
-	MetricsAdjusterResetTotal = prometheus.NewCounterVec(
+	MetricsAdjustedTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "metrics_adjust_reset_total",
+			Name: "metrics_adjusted_total",
 			Help: "",
 		},
-		[]string{"receiver"},
+		[]string{"receiver", "type"},
 	)
 
 	metricsGroupCreatedTotal = prometheus.NewCounterVec(
@@ -136,7 +136,7 @@ func RegisterView() {
 			metricsGroupCreatedTotal,
 			toMetricTotal,
 			timeseriesInfoCreatedTotal,
-			MetricsAdjusterResetTotal,
+			MetricsAdjustedTotal,
 		)
 	})
 }
