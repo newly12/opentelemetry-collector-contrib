@@ -67,6 +67,13 @@ var (
 		},
 		[]string{"receiver"},
 	)
+	MetricsAdjusterResetTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "metrics_adjust_reset_total",
+			Help: "",
+		},
+		[]string{"receiver"},
+	)
 
 	metricsGroupCreatedTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -121,11 +128,24 @@ func RegisterView() {
 			TsiMapGcDeletedTotal,
 			metricsGroupCreatedTotal,
 			toMetricTotal,
+			MetricsAdjusterResetTotal,
 		)
 	})
 }
 
 func Len(m *pmetric.Metric) int {
+	// TODO count attrs?
+	// metrics := pmetric.NewMetrics()
+	// for i := 0; i < metrics.ResourceMetrics().Len(); i++ {
+	// 	rm := metrics.ResourceMetrics().At(i)
+	// 	for j := 0; j < rm.ScopeMetrics().Len(); j++ {
+	// 		ilm := rm.ScopeMetrics().At(j)
+	// 		for k := 0; k < ilm.Metrics().Len(); k++ {
+	// 			m := ilm.Metrics().At(k)
+	// 		}
+	// 	}
+	// }
+
 	var total int
 	switch m.DataType() {
 	case pmetric.MetricDataTypeGauge:
