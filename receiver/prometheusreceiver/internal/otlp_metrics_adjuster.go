@@ -96,6 +96,7 @@ func (tsm *timeseriesMap) get(metric *pmetric.Metric, kv pcommon.Map) *timeserie
 	}
 	tsi, ok := tsm.tsiMap[sig]
 	if !ok {
+		timeseriesInfoCreatedTotal.WithLabelValues("").Inc()
 		tsi = &timeseriesinfo{}
 		tsm.tsiMap[sig] = tsi
 	}

@@ -89,6 +89,13 @@ var (
 		},
 		[]string{"receiver"},
 	)
+	timeseriesInfoCreatedTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "timeseries_info_created_total",
+			Help: "",
+		},
+		[]string{"receiver"},
+	)
 
 	toMetricTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -128,6 +135,7 @@ func RegisterView() {
 			TsiMapGcDeletedTotal,
 			metricsGroupCreatedTotal,
 			toMetricTotal,
+			timeseriesInfoCreatedTotal,
 			MetricsAdjusterResetTotal,
 		)
 	})
