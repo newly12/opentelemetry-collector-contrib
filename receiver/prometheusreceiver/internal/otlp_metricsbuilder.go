@@ -190,7 +190,6 @@ func (b *metricBuilder) AddDataPoint(ls labels.Labels, t int64, v float64) error
 		}
 	}
 
-	// TODO total in b.families
 	b.logger.Debug("total metrics in builder families",
 		zap.Int("len(b.families)", len(b.families)),
 	)

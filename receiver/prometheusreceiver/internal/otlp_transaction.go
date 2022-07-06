@@ -184,10 +184,13 @@ func (t *transaction) Commit() error {
 		// Otherwise adjust the startTimestamp for all the metrics.
 		t.adjustStartTimestamp(metricsL)
 	} else {
+		// TODO give it a way to disable this adjuster as well as jobsmap??
 		// TODO: Derive numPoints in this case.
-		adds, resets := NewMetricsAdjuster(t.jobsMap.get(t.job, t.instance), t.logger).AdjustMetricSlice(metricsL)
-		MetricsAdjustedTotal.WithLabelValues("", "resets").Add(float64(resets))
-		MetricsAdjustedTotal.WithLabelValues("", "adds").Add(float64(adds))
+		if false {
+			adds, resets := NewMetricsAdjuster(t.jobsMap.get(t.job, t.instance), t.logger).AdjustMetricSlice(metricsL)
+			MetricsAdjustedTotal.WithLabelValues("", "resets").Add(float64(resets))
+			MetricsAdjustedTotal.WithLabelValues("", "adds").Add(float64(adds))
+		}
 	}
 
 	if metricsL.Len() > 0 {
