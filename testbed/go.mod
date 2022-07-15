@@ -25,8 +25,8 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/testbed/mockdatareceivers/mockawsxrayreceiver v0.52.0
 	github.com/prometheus/common v0.34.0
 	github.com/prometheus/prometheus v0.35.1-0.20220503184552-2381d7be5731
-	github.com/shirou/gopsutil/v3 v3.22.5
-	github.com/stretchr/testify v1.7.1
+	github.com/shirou/gopsutil/v3 v3.22.6
+	github.com/stretchr/testify v1.7.5
 	go.opentelemetry.io/collector v0.52.0
 	go.opentelemetry.io/collector/pdata v0.52.0
 	go.opentelemetry.io/collector/semconv v0.52.0
@@ -212,7 +212,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.24.1 // indirect
 	k8s.io/apimachinery v0.24.1 // indirect
 	k8s.io/client-go v0.24.1 // indirect
