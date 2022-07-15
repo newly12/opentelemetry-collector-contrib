@@ -100,7 +100,7 @@ func FromMetrics(md pmetric.Metrics, settings Settings) (tsMap map[string]*promp
 				}
 			}
 		}
-		addResourceTargetInfo(resource, settings, mostRecentTimestamp, tsMap)
+		// addResourceTargetInfo(resource, settings, mostRecentTimestamp, tsMap)
 	}
 
 	return
