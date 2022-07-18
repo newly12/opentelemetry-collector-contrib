@@ -147,7 +147,7 @@ func (t *transaction) Commit() error {
 		}
 		// Otherwise adjust the startTimestamp for all the metrics.
 		t.adjustStartTimestamp(metricsL)
-	} else {
+	} else if t.jobsMap != nil {
 		// TODO: Derive numPoints in this case.
 		_ = NewMetricsAdjuster(t.jobsMap.get(t.job, t.instance), t.logger).AdjustMetricSlice(metricsL)
 	}
@@ -227,7 +227,11 @@ func (t *transaction) metricSliceToMetrics(metricsL *pmetric.MetricSlice) *pmetr
 	metrics := pmetric.NewMetrics()
 	rms := metrics.ResourceMetrics().AppendEmpty()
 	ilm := rms.ScopeMetrics().AppendEmpty()
-	metricsL.CopyTo(ilm.Metrics())
+	if t.jobsMap != nil {
+		metricsL.CopyTo(ilm.Metrics())
+	} else {
+		metricsL.MoveAndAppendTo(ilm.Metrics())
+	}
 	t.nodeResource.CopyTo(rms.Resource())
 	return &metrics
 }
