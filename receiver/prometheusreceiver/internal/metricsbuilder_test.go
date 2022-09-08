@@ -16,12 +16,11 @@ package internal
 
 import (
 	"errors"
+	"regexp"
 	"testing"
 
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
-	"github.com/prometheus/prometheus/model/textparse"
-	"github.com/prometheus/prometheus/scrape"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/pdata/pcommon"
@@ -29,11 +28,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func runBuilderStartTimeTests(t *testing.T, tests []buildTestData,
-	startTimeMetricRegex string, expectedBuilderStartTime float64) {
+func runBuilderStartTimeTests(t *testing.T, tests []buildTestData, startTimeMetricRegex *regexp.Regexp, expectedBuilderStartTime float64) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mc := newMockMetadataCache(testMetadata)
+			mc := testMetadataStore(testMetadata)
 			st := startTs
 			for _, page := range tt.inputs {
 				b := newMetricBuilder(mc, true, startTimeMetricRegex, zap.NewNop())
@@ -102,149 +100,8 @@ func Test_startTimeMetricMatch_pdata(t *testing.T) {
 		},
 	}
 
-	runBuilderStartTimeTests(t, matchTests, "^(.+_)*process_start_time_seconds$", matchBuilderStartTime)
-	runBuilderStartTimeTests(t, nomatchTests, "^(.+_)*process_start_time_seconds$", defaultBuilderStartTime)
-}
-
-func TestGetBoundary(t *testing.T) {
-	tests := []struct {
-		name      string
-		mtype     pmetric.MetricDataType
-		labels    labels.Labels
-		wantValue float64
-		wantErr   string
-	}{
-		{
-			name:  "cumulative histogram with bucket label",
-			mtype: pmetric.MetricDataTypeHistogram,
-			labels: labels.Labels{
-				{Name: model.BucketLabel, Value: "0.256"},
-			},
-			wantValue: 0.256,
-		},
-		{
-			name:  "gauge histogram with bucket label",
-			mtype: pmetric.MetricDataTypeHistogram,
-			labels: labels.Labels{
-				{Name: model.BucketLabel, Value: "11.71"},
-			},
-			wantValue: 11.71,
-		},
-		{
-			name:  "summary with bucket label",
-			mtype: pmetric.MetricDataTypeSummary,
-			labels: labels.Labels{
-				{Name: model.BucketLabel, Value: "11.71"},
-			},
-			wantErr: errEmptyQuantileLabel.Error(),
-		},
-		{
-			name:  "summary with quantile label",
-			mtype: pmetric.MetricDataTypeSummary,
-			labels: labels.Labels{
-				{Name: model.QuantileLabel, Value: "92.88"},
-			},
-			wantValue: 92.88,
-		},
-		{
-			name:  "gauge histogram mismatched with bucket label",
-			mtype: pmetric.MetricDataTypeSummary,
-			labels: labels.Labels{
-				{Name: model.BucketLabel, Value: "11.71"},
-			},
-			wantErr: errEmptyQuantileLabel.Error(),
-		},
-		{
-			name:  "other data types without matches",
-			mtype: pmetric.MetricDataTypeGauge,
-			labels: labels.Labels{
-				{Name: model.BucketLabel, Value: "11.71"},
-			},
-			wantErr: errNoBoundaryLabel.Error(),
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			value, err := getBoundary(tt.mtype, tt.labels)
-			if tt.wantErr != "" {
-				require.NotNil(t, err)
-				require.Contains(t, err.Error(), tt.wantErr)
-				return
-			}
-
-			require.Nil(t, err)
-			require.Equal(t, value, tt.wantValue)
-		})
-	}
-}
-
-func TestConvToMetricType(t *testing.T) {
-	tests := []struct {
-		name          string
-		mtype         textparse.MetricType
-		want          pmetric.MetricDataType
-		wantMonotonic bool
-	}{
-		{
-			name:          "textparse.counter",
-			mtype:         textparse.MetricTypeCounter,
-			want:          pmetric.MetricDataTypeSum,
-			wantMonotonic: true,
-		},
-		{
-			name:          "textparse.gauge",
-			mtype:         textparse.MetricTypeGauge,
-			want:          pmetric.MetricDataTypeGauge,
-			wantMonotonic: false,
-		},
-		{
-			name:          "textparse.unknown",
-			mtype:         textparse.MetricTypeUnknown,
-			want:          pmetric.MetricDataTypeGauge,
-			wantMonotonic: false,
-		},
-		{
-			name:          "textparse.histogram",
-			mtype:         textparse.MetricTypeHistogram,
-			want:          pmetric.MetricDataTypeHistogram,
-			wantMonotonic: true,
-		},
-		{
-			name:          "textparse.summary",
-			mtype:         textparse.MetricTypeSummary,
-			want:          pmetric.MetricDataTypeSummary,
-			wantMonotonic: true,
-		},
-		{
-			name:          "textparse.metric_type_info",
-			mtype:         textparse.MetricTypeInfo,
-			want:          pmetric.MetricDataTypeSum,
-			wantMonotonic: false,
-		},
-		{
-			name:          "textparse.metric_state_set",
-			mtype:         textparse.MetricTypeStateset,
-			want:          pmetric.MetricDataTypeSum,
-			wantMonotonic: false,
-		},
-		{
-			name:          "textparse.metric_gauge_hostogram",
-			mtype:         textparse.MetricTypeGaugeHistogram,
-			want:          pmetric.MetricDataTypeNone,
-			wantMonotonic: false,
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			got, monotonic := convToMetricType(tt.mtype)
-			require.Equal(t, got.String(), tt.want.String())
-			require.Equal(t, monotonic, tt.wantMonotonic)
-		})
-	}
+	runBuilderStartTimeTests(t, matchTests, regexp.MustCompile("^(.+_)*process_start_time_seconds$"), matchBuilderStartTime)
+	runBuilderStartTimeTests(t, nomatchTests, regexp.MustCompile("^(.+_)*process_start_time_seconds$"), defaultBuilderStartTime)
 }
 
 type buildTestData struct {
@@ -396,10 +253,10 @@ func runBuilderTests(t *testing.T, tests []buildTestData) {
 		t.Run(tt.name, func(t *testing.T) {
 			wants := tt.wants()
 			assert.EqualValues(t, len(wants), len(tt.inputs))
-			mc := newMockMetadataCache(testMetadata)
+			mc := testMetadataStore(testMetadata)
 			st := startTs
 			for i, page := range tt.inputs {
-				b := newMetricBuilder(mc, true, "", zap.NewNop())
+				b := newMetricBuilder(mc, true, nil, zap.NewNop())
 				b.startTime = defaultBuilderStartTime // set to a non-zero value
 				for _, pt := range page.pts {
 					// set ts for testing
@@ -915,7 +772,6 @@ func Test_OTLPMetricBuilder_histogram(t *testing.T) {
 				hist0.SetAggregationTemporality(pmetric.MetricAggregationTemporalityCumulative)
 				pt0 := hist0.DataPoints().AppendEmpty()
 				pt0.SetCount(3)
-				pt0.SetSum(0)
 				pt0.SetExplicitBounds(pcommon.NewImmutableFloat64Slice([]float64{10, 20}))
 				pt0.SetBucketCounts(pcommon.NewImmutableUInt64Slice([]uint64{1, 1, 1}))
 				pt0.SetTimestamp(startTsNanos)
@@ -1105,18 +961,18 @@ func Test_OTLPMetricBuilder_summary(t *testing.T) {
 
 // Ensure that we reject duplicate label keys. See https://github.com/open-telemetry/wg-prometheus/issues/44.
 func TestOTLPMetricBuilderDuplicateLabelKeysAreRejected(t *testing.T) {
-	mc := newMockMetadataCache(testMetadata)
-	mb := newMetricBuilder(mc, true, "", zap.NewNop())
+	mc := testMetadataStore(testMetadata)
+	mb := newMetricBuilder(mc, true, nil, zap.NewNop())
 
-	dupLabels := labels.Labels{
-		{Name: "__name__", Value: "test"},
-		{Name: "a", Value: "1"},
-		{Name: "a", Value: "1"},
-		{Name: "z", Value: "9"},
-		{Name: "z", Value: "1"},
-		{Name: "instance", Value: "0.0.0.0:8855"},
-		{Name: "job", Value: "test"},
-	}
+	dupLabels := labels.FromStrings(
+		model.InstanceLabel, "0.0.0.0:8855",
+		model.JobLabel, "test",
+		model.MetricNameLabel, "foo",
+		"a", "1",
+		"a", "1",
+		"z", "9",
+		"z", "1",
+	)
 
 	err := mb.AddDataPoint(dupLabels, 1917, 1.0)
 	require.NotNil(t, err)
@@ -1125,7 +981,7 @@ func TestOTLPMetricBuilderDuplicateLabelKeysAreRejected(t *testing.T) {
 
 func Test_OTLPMetricBuilder_baddata(t *testing.T) {
 	t.Run("empty-metric-name", func(t *testing.T) {
-		b := newMetricBuilder(newMockMetadataCache(testMetadata), true, "", zap.NewNop())
+		b := newMetricBuilder(testMetadataStore(testMetadata), true, nil, zap.NewNop())
 		b.startTime = 1.0 // set to a non-zero value
 		if err := b.AddDataPoint(labels.FromStrings("a", "b"), startTs, 123); !errors.Is(err, errMetricNameNotFound) {
 			t.Error("expecting errMetricNameNotFound error, but get nil")
@@ -1138,35 +994,39 @@ func Test_OTLPMetricBuilder_baddata(t *testing.T) {
 	})
 
 	t.Run("histogram-datapoint-no-bucket-label", func(t *testing.T) {
-		b := newMetricBuilder(newMockMetadataCache(testMetadata), true, "", zap.NewNop())
+		b := newMetricBuilder(testMetadataStore(testMetadata), true, nil, zap.NewNop())
 		b.startTime = 1.0 // set to a non-zero value
-		if err := b.AddDataPoint(createLabels("hist_test", "k", "v"), startTs, 123); !errors.Is(err, errEmptyLeLabel) {
+		if err := b.AddDataPoint(labels.FromStrings(model.MetricNameLabel, "hist_test", "k", "v"), startTs, 123); !errors.Is(err, errEmptyLeLabel) {
 			t.Error("expecting errEmptyBoundaryLabel error, but get nil")
 		}
 	})
 
 	t.Run("summary-datapoint-no-quantile-label", func(t *testing.T) {
-		b := newMetricBuilder(newMockMetadataCache(testMetadata), true, "", zap.NewNop())
+		b := newMetricBuilder(testMetadataStore(testMetadata), true, nil, zap.NewNop())
 		b.startTime = 1.0 // set to a non-zero value
-		if err := b.AddDataPoint(createLabels("summary_test", "k", "v"), startTs, 123); !errors.Is(err, errEmptyQuantileLabel) {
+		if err := b.AddDataPoint(labels.FromStrings(model.MetricNameLabel, "summary_test", "k", "v"), startTs, 123); !errors.Is(err, errEmptyQuantileLabel) {
 			t.Error("expecting errEmptyBoundaryLabel error, but get nil")
 		}
 	})
 }
 
-func newMockMetadataCache(data map[string]scrape.MetricMetadata) *mockMetadataCache {
-	return &mockMetadataCache{data: data}
+type testDataPoint struct {
+	lb labels.Labels
+	t  int64
+	v  float64
 }
 
-type mockMetadataCache struct {
-	data map[string]scrape.MetricMetadata
+type testScrapedPage struct {
+	pts []*testDataPoint
 }
 
-func (m *mockMetadataCache) Metadata(metricName string) (scrape.MetricMetadata, bool) {
-	mm, ok := m.data[metricName]
-	return mm, ok
-}
+func createDataPoint(mname string, value float64, tagPairs ...string) *testDataPoint {
+	var lbls []string
+	lbls = append(lbls, tagPairs...)
+	lbls = append(lbls, model.MetricNameLabel, mname)
 
-func (m *mockMetadataCache) SharedLabels() labels.Labels {
-	return labels.FromStrings("__scheme__", "http")
+	return &testDataPoint{
+		lb: labels.FromStrings(lbls...),
+		v:  value,
+	}
 }

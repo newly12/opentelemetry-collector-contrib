@@ -17,12 +17,16 @@ package internal // import "github.com/open-telemetry/opentelemetry-collector-co
 import (
 	"context"
 	"encoding/hex"
+	"errors"
+	"regexp"
 	"sort"
 	"time"
 
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/exemplar"
 	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/model/metadata"
+	"github.com/prometheus/prometheus/scrape"
 	"github.com/prometheus/prometheus/storage"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
@@ -42,7 +46,7 @@ type transaction struct {
 	isNew                bool
 	ctx                  context.Context
 	useStartTimeMetric   bool
-	startTimeMetricRegex string
+	startTimeMetricRegex *regexp.Regexp
 	sink                 consumer.Metrics
 	externalLabels       labels.Labels
 	nodeResource         pcommon.Resource
@@ -57,7 +61,7 @@ func newTransaction(
 	ctx context.Context,
 	jobsMap *JobsMap,
 	useStartTimeMetric bool,
-	startTimeMetricRegex string,
+	startTimeMetricRegex *regexp.Regexp,
 	sink consumer.Metrics,
 	externalLabels labels.Labels,
 	settings component.ReceiverCreateSettings,
@@ -144,9 +148,13 @@ func copyToLowerBytes(dst []byte, src []byte) {
 }
 
 func (t *transaction) initTransaction(labels labels.Labels) error {
-	metadataCache, err := getMetadataCache(t.ctx)
-	if err != nil {
-		return err
+	target, ok := scrape.TargetFromContext(t.ctx)
+	if !ok {
+		return errors.New("unable to find target in context")
+	}
+	metaStore, ok := scrape.MetricMetadataStoreFromContext(t.ctx)
+	if !ok {
+		return errors.New("unable to find MetricMetadataStore in context")
 	}
 
 	job, instance := labels.Get(model.JobLabel), labels.Get(model.InstanceLabel)
@@ -157,8 +165,8 @@ func (t *transaction) initTransaction(labels labels.Labels) error {
 		t.job = job
 		t.instance = instance
 	}
-	t.nodeResource = CreateResource(job, instance, metadataCache.SharedLabels())
-	t.metricBuilder = newMetricBuilder(metadataCache, t.useStartTimeMetric, t.startTimeMetricRegex, t.logger)
+	t.nodeResource = CreateResource(job, instance, target.DiscoveredLabels())
+	t.metricBuilder = newMetricBuilder(metaStore, t.useStartTimeMetric, t.startTimeMetricRegex, t.logger)
 	t.isNew = false
 	return nil
 }
@@ -169,8 +177,13 @@ func (t *transaction) Commit() error {
 	}
 
 	ctx := t.obsrecv.StartMetricsOp(t.ctx)
-	metricsL := pmetric.NewMetricSlice()
-	err := t.metricBuilder.appendMetrics(metricsL)
+
+	md := pmetric.NewMetrics()
+	rms := md.ResourceMetrics().AppendEmpty()
+	t.nodeResource.CopyTo(rms.Resource())
+	metrics := rms.ScopeMetrics().AppendEmpty().Metrics()
+
+	err := t.metricBuilder.appendMetrics(metrics)
 	if err != nil {
 		t.obsrecv.EndMetricsOp(ctx, dataformat, 0, err)
 		return err
@@ -183,15 +196,13 @@ func (t *transaction) Commit() error {
 			return err
 		}
 		// Otherwise adjust the startTimestamp for all the metrics.
-		t.adjustStartTimestamp(metricsL)
+		t.adjustStartTimestamp(metrics)
 	} else {
-		NewMetricsAdjuster(t.jobsMap.get(t.job, t.instance), t.logger).AdjustMetricSlice(metricsL)
+		NewMetricsAdjuster(t.jobsMap.get(t.job, t.instance), t.logger).AdjustMetrics(md)
 	}
 
-	numPoints := 0
-	if metricsL.Len() > 0 {
-		md := t.metricSliceToMetrics(metricsL)
-		numPoints = md.DataPointCount()
+	numPoints := md.DataPointCount()
+	if numPoints > 0 {
 		if err = t.sink.ConsumeMetrics(ctx, md); err != nil {
 			return err
 		}
@@ -203,6 +214,11 @@ func (t *transaction) Commit() error {
 
 func (t *transaction) Rollback() error {
 	return nil
+}
+
+func (t *transaction) UpdateMetadata(ref storage.SeriesRef, l labels.Labels, m metadata.Metadata) (storage.SeriesRef, error) {
+	//TODO: implement this func
+	return 0, nil
 }
 
 func (t *transaction) AddTargetInfo(labels labels.Labels) error {
@@ -258,13 +274,4 @@ func (t *transaction) adjustStartTimestamp(metricsL pmetric.MetricSlice) {
 			t.logger.Warn("Unknown metric type", zap.String("type", metric.DataType().String()))
 		}
 	}
-}
-
-func (t *transaction) metricSliceToMetrics(metricsL pmetric.MetricSlice) pmetric.Metrics {
-	metrics := pmetric.NewMetrics()
-	rms := metrics.ResourceMetrics().AppendEmpty()
-	ilm := rms.ScopeMetrics().AppendEmpty()
-	metricsL.CopyTo(ilm.Metrics())
-	t.nodeResource.CopyTo(rms.Resource())
-	return metrics
 }

@@ -1194,7 +1194,7 @@ func verifyTarget3(t *testing.T, td *testData, resourceMetrics []pmetric.Resourc
 	doCompare(t, "scrape2", wantAttributes, m2, e2)
 }
 
-func verifyTarget4(t *testing.T, td *testData, resourceMetrics []*pmetric.ResourceMetrics) {
+func verifyTarget4(t *testing.T, td *testData, resourceMetrics []pmetric.ResourceMetrics) {
 	verifyNumValidScrapeResults(t, td, resourceMetrics)
 	m1 := resourceMetrics[0]
 
