@@ -6,7 +6,7 @@ require (
 	github.com/Shopify/sarama v1.35.0
 	github.com/aws/aws-sdk-go v1.44.72
 	github.com/gogo/protobuf v1.3.2
-	github.com/jaegertracing/jaeger v1.37.0
+	github.com/jaegertracing/jaeger v1.38.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.58.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.58.0
 	github.com/stretchr/testify v1.8.0
@@ -57,7 +57,7 @@ require (
 	go.opentelemetry.io/otel/metric v0.31.0 // indirect
 	go.opentelemetry.io/otel/trace v1.9.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122 // indirect
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/text v0.3.7 // indirect
