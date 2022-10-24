@@ -3,7 +3,7 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/receiver/docker
 go 1.18
 
 require (
-	github.com/docker/docker v20.10.17+incompatible
+	github.com/docker/docker v20.10.20+incompatible
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/containertest v0.58.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/docker v0.58.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/scrapertest v0.58.0
