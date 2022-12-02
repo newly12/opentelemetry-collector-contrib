@@ -201,7 +201,7 @@ func (c *Converter) aggregationLoop() {
 					lr := pLogs.ResourceLogs().
 						At(0).ScopeLogs().
 						At(0).LogRecords().AppendEmpty()
-					wi.LogRecord.CopyTo(lr)
+					wi.LogRecord.MoveTo(lr)
 					continue
 				}
 
@@ -214,7 +214,7 @@ func (c *Converter) aggregationLoop() {
 
 				ills := rls.ScopeLogs()
 				lr := ills.AppendEmpty().LogRecords().AppendEmpty()
-				wi.LogRecord.CopyTo(lr)
+				wi.LogRecord.MoveTo(lr)
 
 				resourceIDToLogs[wi.ResourceID] = pLogs
 			}
