@@ -275,8 +275,8 @@ go.opentelemetry.io/collector v0.62.2-0.20221017171445-6313054b642c h1:Dyxwp6ExR
 go.opentelemetry.io/collector v0.62.2-0.20221017171445-6313054b642c/go.mod h1:SmXDcqP/tej8usw0T8/PvSM5Y/yVNA0IvLxZdUxAFxs=
 go.opentelemetry.io/collector/pdata v0.62.2-0.20221017171445-6313054b642c h1:lDjSYe30YHa6IrL7hXJM1aAYk5e1avBir0B3YsfLVW0=
 go.opentelemetry.io/collector/pdata v0.62.2-0.20221017171445-6313054b642c/go.mod h1:s0F5Ectarjz1zy1N1ztxFOtMo1Rq/xMQsyheFSoQCLQ=
-go.opentelemetry.io/collector/semconv v0.62.2-0.20221017171445-6313054b642c h1:FypXnc5gp2lVYdzLlV2VNyiMrswa5jcZvZ/tAj7OwrU=
-go.opentelemetry.io/collector/semconv v0.62.2-0.20221017171445-6313054b642c/go.mod h1:aRkHuJ/OshtDFYluKEtnG5nkKTsy1HZuvZVHmakx+Vo=
+go.opentelemetry.io/collector/semconv v0.72.0 h1:5GweTJstHEhWJX5ArO3+dEkbQx7/GeaAuVCbpaBhaIs=
+go.opentelemetry.io/collector/semconv v0.72.0/go.mod h1:Bqj5xGvhJzyCB8kd8xH+h5OveqIIoWZPgsxz3vjLMNY=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.36.4 h1:aUEBEdCa6iamGzg6fuYxDA8ThxvOG240mAvWDU+XLio=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.36.4/go.mod h1:l2MdsbKTocpPS5nQZscqTR9jd8u96VYZdcpF8Sye7mA=
 go.opentelemetry.io/otel v1.11.1 h1:4WLLAmcfkmDk2ukNXJyq3/kiz/3UzCaYq6PskJsaou4=
