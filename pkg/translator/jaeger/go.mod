@@ -5,8 +5,8 @@ go 1.18
 require (
 	github.com/jaegertracing/jaeger v1.38.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.62.0
-	github.com/stretchr/testify v1.8.1
-	go.opentelemetry.io/collector/pdata v0.62.2-0.20221017171445-6313054b642c
+	github.com/stretchr/testify v1.8.2
+	go.opentelemetry.io/collector/pdata v1.0.0-rc9
 	go.opentelemetry.io/collector/semconv v0.62.2-0.20221017171445-6313054b642c
 )
 
@@ -23,14 +23,14 @@ require (
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	go.uber.org/multierr v1.8.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.23.0 // indirect
-	golang.org/x/net v0.0.0-20220926192436-02166a98028e // indirect
-	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
-	golang.org/x/text v0.4.0 // indirect
-	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc // indirect
-	google.golang.org/grpc v1.50.1 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
+	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
+	google.golang.org/grpc v1.54.0 // indirect
+	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
