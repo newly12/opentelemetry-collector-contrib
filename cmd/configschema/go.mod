@@ -9,7 +9,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/redisreceiver v0.62.0
 	github.com/stretchr/testify v1.8.1
 	go.opentelemetry.io/collector v0.62.2-0.20221017171445-6313054b642c
-	golang.org/x/mod v0.6.0
+	golang.org/x/mod v0.10.0
 	golang.org/x/text v0.4.0
 )
 
