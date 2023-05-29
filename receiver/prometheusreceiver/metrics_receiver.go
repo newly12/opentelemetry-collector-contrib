@@ -227,7 +227,7 @@ func (r *pReceiver) initPrometheusComponents(ctx context.Context, host component
 		r.cfg.ID(),
 		r.cfg.PrometheusConfig.GlobalConfig.ExternalLabels,
 	)
-	r.scrapeManager = scrape.NewManager(&scrape.Options{PassMetadataInContext: true}, logger, store)
+	r.scrapeManager = scrape.NewManager(&scrape.Options{PassMetadataInContext: true, ExtraMetrics: r.cfg.ReportExtraMetrics}, logger, store)
 	go func() {
 		if err := r.scrapeManager.Run(r.discoveryManager.SyncCh()); err != nil {
 			r.settings.Logger.Error("Scrape manager failed", zap.Error(err))
