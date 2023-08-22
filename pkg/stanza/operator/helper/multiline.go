@@ -21,15 +21,19 @@ type Multiline struct {
 // NewMultilineConfig creates a new Multiline config
 func NewMultilineConfig() MultilineConfig {
 	return MultilineConfig{
-		LineStartPattern: "",
-		LineEndPattern:   "",
+		LineStartPattern:         "",
+		LineStartPatternNegation: false,
+		LineEndPattern:           "",
+		LineEndPatternNegation:   false,
 	}
 }
 
 // MultilineConfig is the configuration of a multiline helper
 type MultilineConfig struct {
-	LineStartPattern string `mapstructure:"line_start_pattern"`
-	LineEndPattern   string `mapstructure:"line_end_pattern"`
+	LineStartPattern         string `mapstructure:"line_start_pattern"`
+	LineStartPatternNegation bool   `mapstructure:"line_start_pattern_negation"`
+	LineEndPattern           string `mapstructure:"line_end_pattern"`
+	LineEndPatternNegation   bool   `mapstructure:"line_end_pattern_negation"`
 }
 
 // Build will build a Multiline operator.
@@ -64,13 +68,13 @@ func (c MultilineConfig) getSplitFunc(enc encoding.Encoding, flushAtEOF bool, fo
 		if err != nil {
 			return nil, fmt.Errorf("compile line end regex: %w", err)
 		}
-		splitFunc = NewLineEndSplitFunc(re, flushAtEOF, getTrimFunc(preserveLeadingWhitespaces, preserveTrailingWhitespaces))
+		splitFunc = NewLineEndSplitFunc(re, c.LineEndPatternNegation, flushAtEOF, getTrimFunc(preserveLeadingWhitespaces, preserveTrailingWhitespaces))
 	case startPattern != "":
 		re, err := regexp.Compile("(?m)" + c.LineStartPattern)
 		if err != nil {
 			return nil, fmt.Errorf("compile line start regex: %w", err)
 		}
-		splitFunc = NewLineStartSplitFunc(re, flushAtEOF, getTrimFunc(preserveLeadingWhitespaces, preserveTrailingWhitespaces))
+		splitFunc = NewLineStartSplitFunc(re, c.LineStartPatternNegation, flushAtEOF, getTrimFunc(preserveLeadingWhitespaces, preserveTrailingWhitespaces))
 	default:
 		return nil, fmt.Errorf("unreachable")
 	}
@@ -84,7 +88,7 @@ func (c MultilineConfig) getSplitFunc(enc encoding.Encoding, flushAtEOF bool, fo
 
 // NewLineStartSplitFunc creates a bufio.SplitFunc that splits an incoming stream into
 // tokens that start with a match to the regex pattern provided
-func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, trimFunc trimFunc) bufio.SplitFunc {
+func NewLineStartSplitFunc(re *regexp.Regexp, negate bool, flushAtEOF bool, trimFunc trimFunc) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		firstLoc := re.FindIndex(data)
 		if firstLoc == nil {
@@ -95,6 +99,11 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, trimFunc trimFunc
 				return
 			}
 			return 0, nil, nil // read more data and try again.
+		}
+		if negate {
+			advance = firstLoc[1]
+			token = trimFunc(data[:advance])
+			return advance, token, nil
 		}
 		firstMatchStart := firstLoc[0]
 		firstMatchEnd := firstLoc[1]
@@ -138,7 +147,7 @@ func NewLineStartSplitFunc(re *regexp.Regexp, flushAtEOF bool, trimFunc trimFunc
 
 // NewLineEndSplitFunc creates a bufio.SplitFunc that splits an incoming stream into
 // tokens that end with a match to the regex pattern provided
-func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, trimFunc trimFunc) bufio.SplitFunc {
+func NewLineEndSplitFunc(re *regexp.Regexp, negate bool, flushAtEOF bool, trimFunc trimFunc) bufio.SplitFunc {
 	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		loc := re.FindIndex(data)
 		if loc == nil {
@@ -151,15 +160,35 @@ func NewLineEndSplitFunc(re *regexp.Regexp, flushAtEOF bool, trimFunc trimFunc) 
 			return 0, nil, nil // read more data and try again
 		}
 
-		// If the match goes up to the end of the current bufer, do another
-		// read until we can capture the entire match
-		if loc[1] == len(data)-1 && !atEOF {
-			return 0, nil, nil
+		if !negate {
+			// If the match goes up to the end of the current buffer, do another
+			// read until we can capture the entire match
+			if loc[1] == len(data)-1 && !atEOF {
+				return 0, nil, nil
+			}
+
+			advance = loc[1]
+			token = trimFunc(data[:advance])
+			err = nil
+			return
 		}
 
+		// when negate is true and the match is not the first line, we can return lines before it
+		if loc[0] != 0 {
+			advance = loc[0]
+			token = trimFunc(data[:advance])
+			return
+		}
+
+		// we have to search rest lines to see if any match, and when no match then we
+		// should read more
 		advance = loc[1]
-		token = trimFunc(data[:loc[1]])
-		err = nil
+		loc = re.FindIndex(data[advance:])
+		if loc == nil {
+			return 0, nil, nil
+		}
+		advance += loc[0]
+		token = trimFunc(data[:advance])
 		return
 	}
 }

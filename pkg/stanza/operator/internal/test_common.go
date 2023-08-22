@@ -73,6 +73,7 @@ func (r *TestReader) SplitFunc(splitFunc bufio.SplitFunc) bufio.SplitFunc {
 type TokenizerTestCase struct {
 	Name                        string
 	Pattern                     string
+	Negate                      bool
 	Raw                         []byte
 	ExpectedTokenized           []string
 	ExpectedError               error

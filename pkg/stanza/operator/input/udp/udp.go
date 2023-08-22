@@ -43,8 +43,10 @@ func NewConfigWithID(operatorID string) *Config {
 			Encoding:        "utf-8",
 			OneLogPerPacket: false,
 			Multiline: helper.MultilineConfig{
-				LineStartPattern: "",
-				LineEndPattern:   ".^", // Use never matching regex to not split data by default
+				LineStartPattern:         "",
+				LineStartPatternNegation: false,
+				LineEndPattern:           ".^", // Use never matching regex to not split data by default
+				LineEndPatternNegation:   false,
 			},
 		},
 	}

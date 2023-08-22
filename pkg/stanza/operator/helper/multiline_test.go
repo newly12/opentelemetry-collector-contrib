@@ -148,6 +148,20 @@ func TestLineStartSplitFunc(t *testing.T) {
 		},
 		{
 			internal.TokenizerTestCase{
+				Name:    "MultipleMultilineLogsWithNegateEnabled",
+				Pattern: `^LOGSTART \d+`,
+				Raw:     []byte("LOGSTART 12 log1\t  \nLOGPART log1\nLOGPART log1\t   \nLOGSTART 17 log2\nLOGPART log2\nanother line\nLOGSTART 43 log5"),
+				ExpectedTokenized: []string{
+					"LOGSTART 12",
+					"log1\t  \nLOGPART log1\nLOGPART log1\t   \nLOGSTART 17",
+					"log2\nLOGPART log2\nanother line\nLOGSTART 43",
+				},
+				Negate: true,
+			},
+			nil,
+		},
+		{
+			internal.TokenizerTestCase{
 				Name:    "LogsWithoutFlusher",
 				Pattern: `^LOGSTART \d+`,
 				Raw:     []byte("LOGPART log1\nLOGPART log1\t   \n"),
@@ -221,7 +235,8 @@ func TestLineStartSplitFunc(t *testing.T) {
 
 	for _, tc := range testCases {
 		cfg := &MultilineConfig{
-			LineStartPattern: tc.Pattern,
+			LineStartPattern:         tc.Pattern,
+			LineStartPatternNegation: tc.Negate,
 		}
 
 		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.Flusher, 0, tc.PreserveLeadingWhitespaces, tc.PreserveTrailingWhitespaces)
@@ -230,7 +245,7 @@ func TestLineStartSplitFunc(t *testing.T) {
 	}
 
 	t.Run("FirstMatchHitsEndOfBuffer", func(t *testing.T) {
-		splitFunc := NewLineStartSplitFunc(regexp.MustCompile("LOGSTART"), false, noTrim)
+		splitFunc := NewLineStartSplitFunc(regexp.MustCompile("LOGSTART"), false, false, noTrim)
 		data := []byte(`LOGSTART`)
 
 		t.Run("NotAtEOF", func(t *testing.T) {
@@ -362,6 +377,42 @@ func TestLineEndSplitFunc(t *testing.T) {
 		},
 		{
 			internal.TokenizerTestCase{
+				Name:    "MultipleMultilineLogsWithNegateEnabled_1",
+				Pattern: `^LOGEND.*$`,
+				Negate:  true,
+				Raw:     []byte("LOGSTART 12 log1\t  \nLOGPART log1\nLOGEND log1\t   \nLOGSTART 17 log2\nLOGPART log2\nLOGEND log2\nLOGSTART 43 log5"),
+				ExpectedTokenized: []string{
+					"LOGSTART 12 log1\t  \nLOGPART log1",
+					"LOGEND log1\t   \nLOGSTART 17 log2\nLOGPART log2",
+				},
+			},
+			nil,
+		},
+		{
+			internal.TokenizerTestCase{
+				Name:              "MultipleMultilineLogsWithNegateEnabledNoMatches",
+				Pattern:           `^LOGEND.*$`,
+				Negate:            true,
+				Raw:               []byte("line1\nline2\n"),
+				ExpectedTokenized: nil,
+			},
+			nil,
+		},
+		{
+			internal.TokenizerTestCase{
+				Name:    "MultipleMultilineLogsWithNegateEnabled_2",
+				Pattern: `^LOGEND.*$`,
+				Negate:  true,
+				Raw:     []byte("LOGSTART 12 log1\t  \nLOGPART log1\nLOGEND log1\t   \nLOGSTART 17 log2\nLOGPART log2\nLOGEND log2\nLOGSTART 43 log5"),
+				ExpectedTokenized: []string{
+					"LOGSTART 12 log1\t  \nLOGPART log1",
+					"LOGEND log1\t   \nLOGSTART 17 log2\nLOGPART log2",
+				},
+			},
+			nil,
+		},
+		{
+			internal.TokenizerTestCase{
 				Name:    "LogsWithoutFlusher",
 				Pattern: `^LOGEND.*$`,
 				Raw:     []byte("LOGPART log1\nLOGPART log1\t   \n"),
@@ -437,7 +488,8 @@ func TestLineEndSplitFunc(t *testing.T) {
 
 	for _, tc := range testCases {
 		cfg := &MultilineConfig{
-			LineEndPattern: tc.Pattern,
+			LineEndPattern:         tc.Pattern,
+			LineEndPatternNegation: tc.Negate,
 		}
 
 		splitFunc, err := cfg.getSplitFunc(unicode.UTF8, false, tc.Flusher, 0, tc.PreserveLeadingWhitespaces, tc.PreserveTrailingWhitespaces)
