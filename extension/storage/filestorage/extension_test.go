@@ -11,6 +11,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/extension/experimental/storage"
@@ -385,4 +386,53 @@ func TestCompactionRemoveTemp(t *testing.T) {
 	files, err = os.ReadDir(emptyTempDir)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(files))
+}
+
+func TestSanitize(t *testing.T) {
+	testCases := []struct {
+		name          string
+		componentName string
+		sanitizedName string
+	}{
+		{
+			name:          "safe characters",
+			componentName: `.UPPERCASE-lowercase_1234567890~`,
+			sanitizedName: `.UPPERCASE-lowercase_1234567890~`,
+		},
+		{
+			name:          "unsafe characters",
+			componentName: `slash/backslash\colon:asterisk*questionmark?quote'doublequote"angle<>pipe|exclamationmark!percent%space `,
+			sanitizedName: "slash%2Fbackslash%5Ccolon%3Aasterisk%2Aquestionmark%3Fquote%27doublequote%22angle%3C%3Epipe%7Cexclamationmark%21percent%25space+",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.sanitizedName, sanitize(testCase.componentName))
+		})
+	}
+}
+
+func TestComponentNameWithUnsafeCharacters(t *testing.T) {
+	tempDir := t.TempDir()
+
+	f := NewFactory()
+	cfg := f.CreateDefaultConfig().(*Config)
+	cfg.Directory = tempDir
+
+	extension, err := f.CreateExtension(context.Background(), extensiontest.NewNopCreateSettings(), cfg)
+	require.NoError(t, err)
+
+	se, ok := extension.(storage.Extension)
+	require.True(t, ok)
+
+	client, err := se.GetClient(
+		context.Background(),
+		component.KindReceiver,
+		newTestEntity("my/slashed/component*"),
+		"",
+	)
+
+	require.NoError(t, err)
+	require.NotNil(t, client)
 }

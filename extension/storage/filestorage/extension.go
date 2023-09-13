@@ -6,6 +6,7 @@ package filestorage // import "github.com/open-telemetry/opentelemetry-collector
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"path/filepath"
 
 	"go.opentelemetry.io/collector/component"
@@ -13,6 +14,8 @@ import (
 	"go.opentelemetry.io/collector/extension/experimental/storage"
 	"go.uber.org/zap"
 )
+
+var sanitize = url.QueryEscape
 
 type localFileStorage struct {
 	cfg    *Config
@@ -49,8 +52,7 @@ func (lfs *localFileStorage) GetClient(_ context.Context, kind component.Kind, e
 	} else {
 		rawName = fmt.Sprintf("%s_%s_%s_%s", kindString(kind), ent.Type(), ent.Name(), name)
 	}
-	// TODO sanitize rawName
-	absoluteName := filepath.Join(lfs.cfg.Directory, rawName)
+	absoluteName := filepath.Join(lfs.cfg.Directory, url.QueryEscape(rawName))
 	client, err := newClient(lfs.logger, absoluteName, lfs.cfg.Timeout, lfs.cfg.Compaction)
 
 	if err != nil {
