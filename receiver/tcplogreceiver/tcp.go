@@ -15,7 +15,7 @@ import (
 
 // NewFactory creates a factory for tcp receiver
 func NewFactory() receiver.Factory {
-	return adapter.NewFactory(ReceiverType{}, metadata.LogsStability)
+	return adapter.NewFactory(ReceiverType{}, metadata.LogsStability, nil)
 }
 
 // ReceiverType implements adapter.LogReceiverType

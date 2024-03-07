@@ -6,6 +6,7 @@ package pipeline // import "github.com/open-telemetry/opentelemetry-collector-co
 import (
 	"fmt"
 
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/errors"
@@ -19,7 +20,7 @@ type Config struct {
 }
 
 // Build will build a pipeline from the config.
-func (c Config) Build(logger *zap.SugaredLogger) (*DirectedPipeline, error) {
+func (c Config) Build(logger *zap.SugaredLogger, meter metric.Meter) (*DirectedPipeline, error) {
 	if logger == nil {
 		return nil, errors.NewError("logger must be provided", "")
 	}
@@ -35,7 +36,7 @@ func (c Config) Build(logger *zap.SugaredLogger) (*DirectedPipeline, error) {
 
 	ops := make([]operator.Operator, 0, len(c.Operators))
 	for _, opCfg := range c.Operators {
-		op, err := opCfg.Build(logger)
+		op, err := opCfg.Build(logger, meter)
 		if err != nil {
 			return nil, err
 		}

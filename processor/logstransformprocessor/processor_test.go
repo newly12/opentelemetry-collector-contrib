@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/processor/processortest"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal/testdata"
@@ -225,7 +226,7 @@ type laggyOperatorConfig struct {
 	helper.WriterConfig
 }
 
-func (l *laggyOperatorConfig) Build(s *zap.SugaredLogger) (operator.Operator, error) {
+func (l *laggyOperatorConfig) Build(s *zap.SugaredLogger, meter metric.Meter) (operator.Operator, error) {
 	wo, err := l.WriterConfig.Build(s)
 	if err != nil {
 		return nil, err

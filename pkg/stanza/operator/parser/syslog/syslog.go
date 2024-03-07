@@ -16,6 +16,7 @@ import (
 	"github.com/haimrubinstein/go-syslog/v3/octetcounting"
 	"github.com/haimrubinstein/go-syslog/v3/rfc3164"
 	"github.com/haimrubinstein/go-syslog/v3/rfc5424"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
@@ -65,7 +66,7 @@ type BaseConfig struct {
 }
 
 // Build will build a JSON parser operator.
-func (c Config) Build(logger *zap.SugaredLogger) (operator.Operator, error) {
+func (c Config) Build(logger *zap.SugaredLogger, meter metric.Meter) (operator.Operator, error) {
 	if c.ParserConfig.TimeParser == nil {
 		parseFromField := entry.NewAttributeField("timestamp")
 		c.ParserConfig.TimeParser = &helper.TimeParser{

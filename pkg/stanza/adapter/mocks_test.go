@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	"go.opentelemetry.io/collector/component"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
@@ -41,7 +42,7 @@ func NewUnstartableConfig() operator.Config {
 }
 
 // Build will build an unstartable operator
-func (c *UnstartableConfig) Build(logger *zap.SugaredLogger) (operator.Operator, error) {
+func (c *UnstartableConfig) Build(logger *zap.SugaredLogger, meter metric.Meter) (operator.Operator, error) {
 	o, _ := c.OutputConfig.Build(logger)
 	return &UnstartableOperator{OutputOperator: o}, nil
 }

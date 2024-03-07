@@ -194,7 +194,7 @@ func TestBuildAndProcess(t *testing.T) {
 			cfg := tc.cfg
 			cfg.OutputIDs = []string{"fake"}
 			cfg.OnError = "send"
-			op, err := cfg.Build(testutil.Logger(t))
+			op, err := cfg.Build(testutil.Logger(t), nil)
 			require.NoError(t, err)
 
 			unqouteOp := op.(*Transformer)

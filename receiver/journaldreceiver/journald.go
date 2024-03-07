@@ -15,7 +15,7 @@ import (
 
 // newFactoryAdapter creates a factory for journald receiver
 func newFactoryAdapter() receiver.Factory {
-	return adapter.NewFactory(ReceiverType{}, metadata.LogsStability)
+	return adapter.NewFactory(ReceiverType{}, metadata.LogsStability, nil)
 }
 
 // CreateDefaultConfig creates a config with type and version

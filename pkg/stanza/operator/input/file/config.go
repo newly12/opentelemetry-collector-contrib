@@ -4,6 +4,7 @@
 package file // import "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/input/file"
 
 import (
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/decode"
@@ -38,7 +39,7 @@ type Config struct {
 }
 
 // Build will build a file input operator from the supplied configuration
-func (c Config) Build(logger *zap.SugaredLogger) (operator.Operator, error) {
+func (c Config) Build(logger *zap.SugaredLogger, meter metric.Meter) (operator.Operator, error) {
 	inputOperator, err := c.InputConfig.Build(logger)
 	if err != nil {
 		return nil, err
@@ -60,7 +61,7 @@ func (c Config) Build(logger *zap.SugaredLogger) (operator.Operator, error) {
 		toBody:        toBody,
 	}
 
-	input.fileConsumer, err = c.Config.Build(logger, input.emit)
+	input.fileConsumer, err = c.Config.Build(logger, meter, input.emit)
 	if err != nil {
 		return nil, err
 	}

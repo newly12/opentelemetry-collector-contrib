@@ -319,7 +319,7 @@ func TestBuildAndProcess(t *testing.T) {
 			cfg.OutputIDs = []string{"fake"}
 			cfg.OnError = "drop"
 
-			op, err := cfg.Build(testutil.Logger(t))
+			op, err := cfg.Build(testutil.Logger(t), nil)
 			if tc.expectErr && err != nil {
 				require.Error(t, err)
 				t.SkipNow()

@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/collector/confmap"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 )
 
@@ -25,7 +26,7 @@ func NewConfig(b Builder) Config {
 type Builder interface {
 	ID() string
 	Type() string
-	Build(*zap.SugaredLogger) (Operator, error)
+	Build(*zap.SugaredLogger, metric.Meter) (Operator, error)
 	SetID(string)
 }
 

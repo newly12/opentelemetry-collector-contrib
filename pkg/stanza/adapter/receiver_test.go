@@ -29,7 +29,7 @@ import (
 func TestStart(t *testing.T) {
 	mockConsumer := &consumertest.LogsSink{}
 
-	factory := NewFactory(TestReceiverType{}, component.StabilityLevelDevelopment)
+	factory := NewFactory(TestReceiverType{}, component.StabilityLevelDevelopment, nil)
 
 	logsReceiver, err := factory.CreateLogsReceiver(
 		context.Background(),
@@ -58,7 +58,7 @@ func TestStart(t *testing.T) {
 func TestHandleStartError(t *testing.T) {
 	mockConsumer := &consumertest.LogsSink{}
 
-	factory := NewFactory(TestReceiverType{}, component.StabilityLevelDevelopment)
+	factory := NewFactory(TestReceiverType{}, component.StabilityLevelDevelopment, nil)
 
 	cfg := factory.CreateDefaultConfig().(*TestConfig)
 	cfg.Input = NewUnstartableConfig()
@@ -72,7 +72,7 @@ func TestHandleStartError(t *testing.T) {
 
 func TestHandleConsume(t *testing.T) {
 	mockConsumer := &consumertest.LogsSink{}
-	factory := NewFactory(TestReceiverType{}, component.StabilityLevelDevelopment)
+	factory := NewFactory(TestReceiverType{}, component.StabilityLevelDevelopment, nil)
 
 	logsReceiver, err := factory.CreateLogsReceiver(context.Background(), receivertest.NewNopCreateSettings(), factory.CreateDefaultConfig(), mockConsumer)
 	require.NoError(t, err, "receiver should successfully build")
@@ -95,7 +95,7 @@ func TestHandleConsume(t *testing.T) {
 
 func TestHandleConsumeRetry(t *testing.T) {
 	mockConsumer := consumerretry.NewMockLogsRejecter(2)
-	factory := NewFactory(TestReceiverType{}, component.StabilityLevelDevelopment)
+	factory := NewFactory(TestReceiverType{}, component.StabilityLevelDevelopment, nil)
 
 	cfg := factory.CreateDefaultConfig()
 	cfg.(*TestConfig).BaseConfig.RetryOnFailure.Enabled = true

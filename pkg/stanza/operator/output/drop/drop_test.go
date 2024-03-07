@@ -15,21 +15,21 @@ import (
 
 func TestBuildValid(t *testing.T) {
 	cfg := NewConfig("test")
-	op, err := cfg.Build(testutil.Logger(t))
+	op, err := cfg.Build(testutil.Logger(t), nil)
 	require.NoError(t, err)
 	require.IsType(t, &Output{}, op)
 }
 
 func TestBuildIvalid(t *testing.T) {
 	cfg := NewConfig("test")
-	_, err := cfg.Build(nil)
+	_, err := cfg.Build(nil, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "build context is missing a logger")
 }
 
 func TestProcess(t *testing.T) {
 	cfg := NewConfig("test")
-	op, err := cfg.Build(testutil.Logger(t))
+	op, err := cfg.Build(testutil.Logger(t), nil)
 	require.NoError(t, err)
 
 	entry := entry.New()

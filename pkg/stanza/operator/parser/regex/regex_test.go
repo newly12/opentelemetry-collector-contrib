@@ -24,7 +24,7 @@ func newTestParser(t *testing.T, regex string, cacheSize uint16) *Parser {
 	if cacheSize > 0 {
 		cfg.Cache.Size = cacheSize
 	}
-	op, err := cfg.Build(testutil.Logger(t))
+	op, err := cfg.Build(testutil.Logger(t), nil)
 	require.NoError(t, err)
 	return op.(*Parser)
 }
@@ -32,7 +32,7 @@ func newTestParser(t *testing.T, regex string, cacheSize uint16) *Parser {
 func TestParserBuildFailure(t *testing.T) {
 	cfg := NewConfigWithID("test")
 	cfg.OnError = "invalid_on_error"
-	_, err := cfg.Build(testutil.Logger(t))
+	_, err := cfg.Build(testutil.Logger(t), nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "invalid `on_error` field")
 }
@@ -135,7 +135,7 @@ func TestParserRegex(t *testing.T) {
 			cfg.OutputIDs = []string{"fake"}
 			tc.configure(cfg)
 
-			op, err := cfg.Build(testutil.Logger(t))
+			op, err := cfg.Build(testutil.Logger(t), nil)
 			require.NoError(t, err)
 
 			defer func() {
@@ -167,28 +167,28 @@ func TestBuildParserRegex(t *testing.T) {
 
 	t.Run("BasicConfig", func(t *testing.T) {
 		c := newBasicParser()
-		_, err := c.Build(testutil.Logger(t))
+		_, err := c.Build(testutil.Logger(t), nil)
 		require.NoError(t, err)
 	})
 
 	t.Run("MissingRegexField", func(t *testing.T) {
 		c := newBasicParser()
 		c.Regex = ""
-		_, err := c.Build(testutil.Logger(t))
+		_, err := c.Build(testutil.Logger(t), nil)
 		require.Error(t, err)
 	})
 
 	t.Run("InvalidRegexField", func(t *testing.T) {
 		c := newBasicParser()
 		c.Regex = "())()"
-		_, err := c.Build(testutil.Logger(t))
+		_, err := c.Build(testutil.Logger(t), nil)
 		require.Error(t, err)
 	})
 
 	t.Run("NoNamedGroups", func(t *testing.T) {
 		c := newBasicParser()
 		c.Regex = ".*"
-		_, err := c.Build(testutil.Logger(t))
+		_, err := c.Build(testutil.Logger(t), nil)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "no named capture groups")
 	})
@@ -196,7 +196,7 @@ func TestBuildParserRegex(t *testing.T) {
 	t.Run("NoNamedGroups", func(t *testing.T) {
 		c := newBasicParser()
 		c.Regex = "(.*)"
-		_, err := c.Build(testutil.Logger(t))
+		_, err := c.Build(testutil.Logger(t), nil)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "no named capture groups")
 	})
@@ -231,7 +231,7 @@ func newTestBenchParser(t *testing.T, cacheSize uint16) *Parser {
 	cfg.Regex = benchParsePattern
 	cfg.Cache.Size = cacheSize
 
-	op, err := cfg.Build(testutil.Logger(t))
+	op, err := cfg.Build(testutil.Logger(t), nil)
 	require.NoError(t, err)
 	return op.(*Parser)
 }

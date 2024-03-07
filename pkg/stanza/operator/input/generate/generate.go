@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
@@ -36,7 +37,7 @@ type Config struct {
 }
 
 // Build will build a generate input operator.
-func (c *Config) Build(logger *zap.SugaredLogger) (operator.Operator, error) {
+func (c *Config) Build(logger *zap.SugaredLogger, meter metric.Meter) (operator.Operator, error) {
 	inputOperator, err := c.InputConfig.Build(logger)
 	if err != nil {
 		return nil, err

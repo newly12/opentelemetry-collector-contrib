@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/collector/consumer"
 	rcvr "go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/receiver/receiverhelper"
+	"go.opentelemetry.io/otel/metric"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal/consumerretry"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator"
@@ -24,16 +25,18 @@ type LogReceiverType interface {
 	InputConfig(component.Config) operator.Config
 }
 
+type meterFunc func(settings component.TelemetrySettings) metric.Meter
+
 // NewFactory creates a factory for a Stanza-based receiver
-func NewFactory(logReceiverType LogReceiverType, sl component.StabilityLevel) rcvr.Factory {
+func NewFactory(logReceiverType LogReceiverType, sl component.StabilityLevel, meter meterFunc) rcvr.Factory {
 	return rcvr.NewFactory(
 		logReceiverType.Type(),
 		logReceiverType.CreateDefaultConfig,
-		rcvr.WithLogs(createLogsReceiver(logReceiverType), sl),
+		rcvr.WithLogs(createLogsReceiver(logReceiverType, meter), sl),
 	)
 }
 
-func createLogsReceiver(logReceiverType LogReceiverType) rcvr.CreateLogsFunc {
+func createLogsReceiver(logReceiverType LogReceiverType, meter meterFunc) rcvr.CreateLogsFunc {
 	return func(
 		ctx context.Context,
 		params rcvr.CreateSettings,
@@ -56,7 +59,7 @@ func createLogsReceiver(logReceiverType LogReceiverType) rcvr.CreateLogsFunc {
 		pipe, err := pipeline.Config{
 			Operators:     operators,
 			DefaultOutput: emitter,
-		}.Build(params.Logger.Sugar())
+		}.Build(params.Logger.Sugar(), meter(params.TelemetrySettings))
 		if err != nil {
 			return nil, err
 		}

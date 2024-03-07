@@ -16,7 +16,7 @@ import (
 
 func newTestParser(t *testing.T) *Parser {
 	cfg := NewConfigWithID("test")
-	op, err := cfg.Build(testutil.Logger(t))
+	op, err := cfg.Build(testutil.Logger(t), nil)
 	require.NoError(t, err)
 	return op.(*Parser)
 }
@@ -24,7 +24,7 @@ func newTestParser(t *testing.T) *Parser {
 func TestParserBuildFailure(t *testing.T) {
 	cfg := NewConfigWithID("test")
 	cfg.OnError = "invalid_on_error"
-	_, err := cfg.Build(testutil.Logger(t))
+	_, err := cfg.Build(testutil.Logger(t), nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "invalid `on_error` field")
 }
@@ -39,7 +39,7 @@ func TestParserInvalidType(t *testing.T) {
 func TestParserByteFailureHeadersMismatch(t *testing.T) {
 	cfg := NewConfigWithID("test")
 	cfg.Header = "name,sev,msg"
-	op, err := cfg.Build(testutil.Logger(t))
+	op, err := cfg.Build(testutil.Logger(t), nil)
 	require.NoError(t, err)
 	parser := op.(*Parser)
 	_, err = parser.parse("[\"stanza\",\"INFO\",\"started agent\", 42, true]")
@@ -238,7 +238,7 @@ func TestParserJarray(t *testing.T) {
 			cfg.OutputIDs = []string{"fake"}
 			tc.configure(cfg)
 
-			op, err := cfg.Build(testutil.Logger(t))
+			op, err := cfg.Build(testutil.Logger(t), nil)
 			if tc.expectBuildErr {
 				require.Error(t, err)
 				return
@@ -357,7 +357,7 @@ dd","eeee"]`,
 			cfg.ParseTo = entry.RootableField{Field: entry.NewBodyField()}
 			cfg.OutputIDs = []string{"fake"}
 
-			op, err := cfg.Build(testutil.Logger(t))
+			op, err := cfg.Build(testutil.Logger(t), nil)
 			require.NoError(t, err)
 
 			fake := testutil.NewFakeOutput(t)
@@ -382,7 +382,7 @@ func TestBuildParserJarray(t *testing.T) {
 
 	t.Run("BasicConfig", func(t *testing.T) {
 		c := newBasicParser()
-		_, err := c.Build(testutil.Logger(t))
+		_, err := c.Build(testutil.Logger(t), nil)
 		require.NoError(t, err)
 	})
 }

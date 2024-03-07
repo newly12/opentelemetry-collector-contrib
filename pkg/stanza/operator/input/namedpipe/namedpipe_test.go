@@ -41,7 +41,7 @@ func TestCreatePipe(t *testing.T) {
 	conf.Path = filename(t)
 	conf.Permissions = 0666
 
-	op, err := conf.Build(zaptest.NewLogger(t).Sugar())
+	op, err := conf.Build(zaptest.NewLogger(t).Sugar(), nil)
 	require.NoError(t, err)
 
 	require.NoError(t, op.Start(testutil.NewUnscopedMockPersister()))
@@ -69,7 +69,7 @@ func TestCreatePipeFailsWithFile(t *testing.T) {
 		require.NoError(t, pipe.Close())
 	}()
 
-	op, err := conf.Build(zaptest.NewLogger(t).Sugar())
+	op, err := conf.Build(zaptest.NewLogger(t).Sugar(), nil)
 	require.NoError(t, err)
 
 	require.Error(t, op.Start(testutil.NewUnscopedMockPersister()))
@@ -83,7 +83,7 @@ func TestCreatePipeAlreadyExists(t *testing.T) {
 
 	require.NoError(t, unix.Mkfifo(conf.Path, conf.Permissions))
 
-	op, err := conf.Build(zaptest.NewLogger(t).Sugar())
+	op, err := conf.Build(zaptest.NewLogger(t).Sugar(), nil)
 	require.NoError(t, err)
 
 	require.NoError(t, op.Start(testutil.NewUnscopedMockPersister()))
@@ -99,7 +99,7 @@ func TestPipeWrites(t *testing.T) {
 	conf.Permissions = 0666
 	conf.OutputIDs = []string{fake.ID()}
 
-	op, err := conf.Build(zaptest.NewLogger(t).Sugar())
+	op, err := conf.Build(zaptest.NewLogger(t).Sugar(), nil)
 	require.NoError(t, err)
 	ops := []operator.Operator{op, fake}
 

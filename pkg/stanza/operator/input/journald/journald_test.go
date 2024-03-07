@@ -55,7 +55,7 @@ func TestInputJournald(t *testing.T) {
 	cfg := NewConfigWithID("my_journald_input")
 	cfg.OutputIDs = []string{"output"}
 
-	op, err := cfg.Build(testutil.Logger(t))
+	op, err := cfg.Build(testutil.Logger(t), nil)
 	require.NoError(t, err)
 
 	mockOutput := testutil.NewMockOperator("output")
@@ -233,7 +233,7 @@ func TestInputJournaldError(t *testing.T) {
 	cfg := NewConfigWithID("my_journald_input")
 	cfg.OutputIDs = []string{"output"}
 
-	op, err := cfg.Build(testutil.Logger(t))
+	op, err := cfg.Build(testutil.Logger(t), nil)
 	require.NoError(t, err)
 
 	mockOutput := testutil.NewMockOperator("output")

@@ -16,7 +16,7 @@ import (
 
 // newFactoryAdapter creates a factory for windowseventlog receiver
 func newFactoryAdapter() receiver.Factory {
-	return adapter.NewFactory(ReceiverType{}, metadata.LogsStability)
+	return adapter.NewFactory(ReceiverType{}, metadata.LogsStability, nil)
 }
 
 // ReceiverType implements adapter.LogReceiverType

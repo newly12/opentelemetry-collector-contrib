@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/collector/featuregate"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 	"golang.org/x/text/encoding"
 
@@ -80,6 +81,7 @@ type Config struct {
 	FlushPeriod        time.Duration   `mapstructure:"force_flush_period,omitempty"`
 	Header             *HeaderConfig   `mapstructure:"header,omitempty"`
 	DeleteAfterRead    bool            `mapstructure:"delete_after_read,omitempty"`
+	ExtraMetrics       bool            `mapstructure:"extra_metrics,omitempty"`
 }
 
 type HeaderConfig struct {
@@ -88,7 +90,7 @@ type HeaderConfig struct {
 }
 
 // Build will build a file input operator from the supplied configuration
-func (c Config) Build(logger *zap.SugaredLogger, emit emit.Callback) (*Manager, error) {
+func (c Config) Build(logger *zap.SugaredLogger, meter metric.Meter, emit emit.Callback) (*Manager, error) {
 	if err := c.validate(); err != nil {
 		return nil, err
 	}
@@ -108,18 +110,18 @@ func (c Config) Build(logger *zap.SugaredLogger, emit emit.Callback) (*Manager, 
 		trimFunc = c.TrimConfig.Func()
 	}
 
-	return c.buildManager(logger, emit, splitFunc, trimFunc)
+	return c.buildManager(logger, meter, emit, splitFunc, trimFunc)
 }
 
 // BuildWithSplitFunc will build a file input operator with customized splitFunc function
-func (c Config) BuildWithSplitFunc(logger *zap.SugaredLogger, emit emit.Callback, splitFunc bufio.SplitFunc) (*Manager, error) {
+func (c Config) BuildWithSplitFunc(logger *zap.SugaredLogger, meter metric.Meter, emit emit.Callback, splitFunc bufio.SplitFunc) (*Manager, error) {
 	if err := c.validate(); err != nil {
 		return nil, err
 	}
-	return c.buildManager(logger, emit, splitFunc, c.TrimConfig.Func())
+	return c.buildManager(logger, meter, emit, splitFunc, c.TrimConfig.Func())
 }
 
-func (c Config) buildManager(logger *zap.SugaredLogger, emit emit.Callback, splitFunc bufio.SplitFunc, trimFunc trim.Func) (*Manager, error) {
+func (c Config) buildManager(logger *zap.SugaredLogger, meter metric.Meter, emit emit.Callback, splitFunc bufio.SplitFunc, trimFunc trim.Func) (*Manager, error) {
 	if emit == nil {
 		return nil, fmt.Errorf("must provide emit function")
 	}
@@ -170,7 +172,8 @@ func (c Config) buildManager(logger *zap.SugaredLogger, emit emit.Callback, spli
 	for i := 0; i < len(knownFiles); i++ {
 		knownFiles[i] = fileset.New[*reader.Metadata](c.MaxConcurrentFiles / 2)
 	}
-	return &Manager{
+
+	manager := &Manager{
 		SugaredLogger:     logger.With("component", "fileconsumer"),
 		readerFactory:     readerFactory,
 		fileMatcher:       fileMatcher,
@@ -180,7 +183,12 @@ func (c Config) buildManager(logger *zap.SugaredLogger, emit emit.Callback, spli
 		currentPollFiles:  fileset.New[*reader.Reader](c.MaxConcurrentFiles / 2),
 		previousPollFiles: fileset.New[*reader.Reader](c.MaxConcurrentFiles / 2),
 		knownFiles:        knownFiles,
-	}, nil
+	}
+	err = manager.registerTelemetry(meter)
+	if err != nil {
+		return nil, err
+	}
+	return manager, nil
 }
 
 func (c Config) validate() error {

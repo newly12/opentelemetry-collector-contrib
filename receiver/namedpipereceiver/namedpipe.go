@@ -15,7 +15,7 @@ import (
 )
 
 func NewFactory() receiver.Factory {
-	return adapter.NewFactory(&ReceiverType{}, metadata.LogsStability)
+	return adapter.NewFactory(&ReceiverType{}, metadata.LogsStability, nil)
 }
 
 type ReceiverType struct{}

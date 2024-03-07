@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/consumer/consumertest"
 	"go.opentelemetry.io/collector/receiver/receivertest"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
@@ -27,7 +28,7 @@ func TestEndToEnd(t *testing.T) {
 	numHosts := 4
 
 	ctx := context.Background()
-	f := NewFactory(BenchReceiverType{}, component.StabilityLevelUndefined)
+	f := NewFactory(BenchReceiverType{}, component.StabilityLevelUndefined, nil)
 	cfg := f.CreateDefaultConfig().(*BenchConfig)
 	cfg.BenchOpConfig.NumEntries = numEntries
 	cfg.BenchOpConfig.NumHosts = numHosts
@@ -53,7 +54,7 @@ type benchCase struct {
 
 func (bc benchCase) run(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		f := NewFactory(BenchReceiverType{}, component.StabilityLevelUndefined)
+		f := NewFactory(BenchReceiverType{}, component.StabilityLevelUndefined, nil)
 		cfg := f.CreateDefaultConfig().(*BenchConfig)
 		cfg.BaseConfig.numWorkers = bc.workerCount
 		cfg.BaseConfig.maxBatchSize = bc.maxBatchSize
@@ -164,7 +165,7 @@ type BenchOpConfig struct {
 }
 
 // Build will build a noop operator.
-func (c BenchOpConfig) Build(logger *zap.SugaredLogger) (operator.Operator, error) {
+func (c BenchOpConfig) Build(logger *zap.SugaredLogger, meter metric.Meter) (operator.Operator, error) {
 	inputOperator, err := c.InputConfig.Build(logger)
 	if err != nil {
 		return nil, err

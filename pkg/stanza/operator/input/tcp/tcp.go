@@ -18,6 +18,7 @@ import (
 
 	"github.com/jpillora/backoff"
 	"go.opentelemetry.io/collector/config/configtls"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 	"golang.org/x/text/encoding"
 
@@ -86,7 +87,7 @@ func (c Config) defaultSplitFuncBuilder(enc encoding.Encoding) (bufio.SplitFunc,
 }
 
 // Build will build a tcp input operator.
-func (c Config) Build(logger *zap.SugaredLogger) (operator.Operator, error) {
+func (c Config) Build(logger *zap.SugaredLogger, meter metric.Meter) (operator.Operator, error) {
 	inputOperator, err := c.InputConfig.Build(logger)
 	if err != nil {
 		return nil, err

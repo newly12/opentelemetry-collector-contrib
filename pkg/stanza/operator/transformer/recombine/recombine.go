@@ -12,6 +12,7 @@ import (
 
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/vm"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
@@ -62,7 +63,7 @@ type Config struct {
 }
 
 // Build creates a new Transformer from a config
-func (c *Config) Build(logger *zap.SugaredLogger) (operator.Operator, error) {
+func (c *Config) Build(logger *zap.SugaredLogger, meter metric.Meter) (operator.Operator, error) {
 	transformer, err := c.TransformerConfig.Build(logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build transformer config: %w", err)

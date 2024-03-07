@@ -27,7 +27,7 @@ func TestOperator(t *testing.T) {
 		},
 	}
 
-	op, err := cfg.Build(testutil.Logger(t))
+	op, err := cfg.Build(testutil.Logger(t), nil)
 	require.NoError(t, err)
 
 	var buf bytes.Buffer

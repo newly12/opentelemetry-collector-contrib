@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/fileconsumer/internal/checkpoint"
@@ -36,6 +38,7 @@ type Manager struct {
 	currentPollFiles  *fileset.Fileset[*reader.Reader]
 	previousPollFiles *fileset.Fileset[*reader.Reader]
 	knownFiles        []*fileset.Fileset[*reader.Metadata]
+	telemetry         *internalTelemetry
 }
 
 func (m *Manager) Start(persister operator.Persister) error {
@@ -95,6 +98,12 @@ func (m *Manager) Stop() error {
 		if err := checkpoint.Save(context.Background(), m.persister, checkpoints); err != nil {
 			m.Errorw("save offsets", zap.Error(err))
 		}
+	}
+	if m.telemetry != nil {
+		if err := m.telemetry.registration.Unregister(); err != nil {
+			m.Errorw("failed to unregister telemetry", zap.Error(err))
+		}
+
 	}
 	return nil
 }
@@ -267,4 +276,31 @@ func (m *Manager) totalReaders() int {
 		total += m.knownFiles[i].Len()
 	}
 	return total
+}
+
+func (m *Manager) reportMetrics(_ context.Context, o metric.Observer) error {
+	for _, r := range m.currentPollFiles.Get() {
+		o.ObserveInt64(m.telemetry.offsetGauge, r.Offset, metric.WithAttributes(attribute.String("file_name", r.FileName)))
+	}
+	return nil
+}
+
+func (m *Manager) registerTelemetry(meter metric.Meter) error {
+	offsetGauge, err := meter.Int64ObservableGauge(
+		"pkg/stanza/file_consumer/file_offset",
+		metric.WithDescription("Current read offset of the file"),
+		metric.WithUnit("1"),
+	)
+	if err != nil {
+		return err
+	}
+	registration, err := meter.RegisterCallback(m.reportMetrics)
+	if err != nil {
+		return err
+	}
+	m.telemetry = &internalTelemetry{
+		offsetGauge:  offsetGauge,
+		registration: registration,
+	}
+	return nil
 }

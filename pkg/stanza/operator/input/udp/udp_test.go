@@ -20,7 +20,7 @@ import (
 
 func udpInputTest(input []byte, expected []string, cfg *Config) func(t *testing.T) {
 	return func(t *testing.T) {
-		op, err := cfg.Build(testutil.Logger(t))
+		op, err := cfg.Build(testutil.Logger(t), nil)
 		require.NoError(t, err)
 
 		mockOutput := testutil.Operator{}
@@ -71,7 +71,7 @@ func udpInputAttributesTest(input []byte, expected []string) func(t *testing.T) 
 		cfg.ListenAddress = ":0"
 		cfg.AddAttributes = true
 
-		op, err := cfg.Build(testutil.Logger(t))
+		op, err := cfg.Build(testutil.Logger(t), nil)
 		require.NoError(t, err)
 
 		mockOutput := testutil.Operator{}
@@ -179,7 +179,7 @@ func TestFailToBind(t *testing.T) {
 		cfg := NewConfigWithID("test_input")
 		cfg.ListenAddress = net.JoinHostPort(ip, strconv.Itoa(port))
 
-		op, err := cfg.Build(testutil.Logger(t))
+		op, err := cfg.Build(testutil.Logger(t), nil)
 		require.NoError(t, err)
 
 		mockOutput := testutil.Operator{}
@@ -211,7 +211,7 @@ func BenchmarkUDPInput(b *testing.B) {
 	cfg := NewConfigWithID("test_id")
 	cfg.ListenAddress = ":0"
 
-	op, err := cfg.Build(testutil.Logger(b))
+	op, err := cfg.Build(testutil.Logger(b), nil)
 	require.NoError(b, err)
 
 	fakeOutput := testutil.NewFakeOutput(b)

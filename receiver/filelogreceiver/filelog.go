@@ -16,7 +16,7 @@ import (
 
 // NewFactory creates a factory for filelog receiver
 func NewFactory() receiver.Factory {
-	return adapter.NewFactory(ReceiverType{}, metadata.LogsStability)
+	return adapter.NewFactory(ReceiverType{}, metadata.LogsStability, metadata.Meter)
 }
 
 // ReceiverType implements stanza.LogReceiverType

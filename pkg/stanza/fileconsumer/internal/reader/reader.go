@@ -31,7 +31,7 @@ type Metadata struct {
 type Reader struct {
 	*Metadata
 	logger                 *zap.SugaredLogger
-	fileName               string
+	FileName               string
 	file                   *os.File
 	fingerprintSize        int
 	initialBufferSize      int
@@ -123,8 +123,8 @@ func (r *Reader) ReadToEnd(ctx context.Context) {
 // Delete will close and delete the file
 func (r *Reader) delete() {
 	r.close()
-	if err := os.Remove(r.fileName); err != nil {
-		r.logger.Errorf("could not delete %s", r.fileName)
+	if err := os.Remove(r.FileName); err != nil {
+		r.logger.Errorf("could not delete %s", r.FileName)
 	}
 }
 
@@ -165,7 +165,7 @@ func (r *Reader) Read(dst []byte) (n int, err error) {
 }
 
 func (r *Reader) NameEquals(other *Reader) bool {
-	return r.fileName == other.fileName
+	return r.FileName == other.FileName
 }
 
 // Validate returns true if the reader still has a valid file handle, false otherwise.
