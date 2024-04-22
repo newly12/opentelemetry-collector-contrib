@@ -163,7 +163,7 @@ func (t *transaction) addSampleDatapoint(rKey resourceKey, ls labels.Labels, met
 		curMF.addCreationTimestamp(seriesRef, ls, atMs, stMs)
 	}
 
-	err := curMF.addSeries(seriesRef, metricName, ls, atMs, val)
+	err := curMF.addSeries(t.logger, seriesRef, metricName, ls, atMs, val)
 	if err != nil {
 		t.logger.Warn("failed to add datapoint", zap.Error(err), zap.String("metric_name", metricName), zap.Any("labels", ls))
 		// never return errors, as that fails the whole scrape
