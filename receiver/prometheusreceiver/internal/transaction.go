@@ -158,7 +158,7 @@ func (t *transaction) Append(_ storage.SeriesRef, ls labels.Labels, atMs int64, 
 	}
 
 	seriesRef := t.getSeriesRef(ls, curMF.mtype)
-	err = curMF.addSeries(seriesRef, metricName, ls, atMs, val)
+	err = curMF.addSeries(t.logger, seriesRef, metricName, ls, atMs, val)
 	if err != nil {
 		// Handle special case of float sample indicating staleness of native
 		// histogram. This is similar to how Prometheus handles it, but we
@@ -298,7 +298,7 @@ func (t *transaction) AppendHistogram(_ storage.SeriesRef, ls labels.Labels, atM
 }
 
 func (t *transaction) AppendCTZeroSample(_ storage.SeriesRef, _ labels.Labels, _, _ int64) (storage.SeriesRef, error) {
-	//TODO: implement this func
+	// TODO: implement this func
 	return 0, nil
 }
 
@@ -470,7 +470,7 @@ func (t *transaction) Rollback() error {
 }
 
 func (t *transaction) UpdateMetadata(_ storage.SeriesRef, _ labels.Labels, _ metadata.Metadata) (storage.SeriesRef, error) {
-	//TODO: implement this func
+	// TODO: implement this func
 	return 0, nil
 }
 
