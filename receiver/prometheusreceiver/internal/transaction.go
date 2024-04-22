@@ -184,7 +184,7 @@ func (t *transaction) Append(_ storage.SeriesRef, ls labels.Labels, atMs int64, 
 
 	seriesRef := t.getSeriesRef(ls, curMF.mtype)
 	cacheRef := ls.Hash()
-	err = curMF.addSeries(seriesRef, metricName, ls, atMs, val)
+	err = curMF.addSeries(t.logger, seriesRef, metricName, ls, atMs, val)
 	if err != nil {
 		t.logger.Warn("failed to add datapoint", zap.Error(err), zap.String("metric_name", metricName), zap.Any("labels", ls))
 		// never return errors, as that fails the while scrape
