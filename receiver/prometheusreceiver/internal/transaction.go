@@ -144,7 +144,7 @@ func (t *transaction) Append(_ storage.SeriesRef, ls labels.Labels, atMs int64, 
 	}
 
 	curMF := t.getOrCreateMetricFamily(getScopeID(ls), metricName)
-	err := curMF.addSeries(t.getSeriesRef(ls, curMF.mtype), metricName, ls, atMs, val)
+	err := curMF.addSeries(t.logger, t.getSeriesRef(ls, curMF.mtype), metricName, ls, atMs, val)
 	if err != nil {
 		t.logger.Warn("failed to add datapoint", zap.Error(err), zap.String("metric_name", metricName), zap.Any("labels", ls))
 	}
@@ -204,7 +204,7 @@ func (t *transaction) AppendExemplar(_ storage.SeriesRef, l labels.Labels, e exe
 }
 
 func (t *transaction) AppendHistogram(_ storage.SeriesRef, _ labels.Labels, _ int64, _ *histogram.Histogram, _ *histogram.FloatHistogram) (storage.SeriesRef, error) {
-	//TODO: implement this func
+	// TODO: implement this func
 	return 0, nil
 }
 
@@ -316,7 +316,7 @@ func (t *transaction) Rollback() error {
 }
 
 func (t *transaction) UpdateMetadata(_ storage.SeriesRef, _ labels.Labels, _ metadata.Metadata) (storage.SeriesRef, error) {
-	//TODO: implement this func
+	// TODO: implement this func
 	return 0, nil
 }
 
