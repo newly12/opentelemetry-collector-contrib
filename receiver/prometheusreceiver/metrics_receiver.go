@@ -60,8 +60,8 @@ func newPrometheusReceiver(set receiver.Settings, cfg *Config, next consumer.Met
 		settings:     set,
 		configLoaded: make(chan struct{}),
 		registerer: prometheus.WrapRegistererWith(
-			prometheus.Labels{"receiver": set.ID.String()},
-			prometheus.DefaultRegisterer),
+			nil,
+			nil),
 		targetAllocatorManager: targetallocator.NewManager(
 			set,
 			cfg.TargetAllocator,
