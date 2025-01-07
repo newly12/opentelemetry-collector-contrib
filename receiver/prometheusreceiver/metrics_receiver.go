@@ -96,8 +96,8 @@ func newPrometheusReceiver(set receiver.Settings, cfg *Config, next consumer.Met
 		settings:     set,
 		configLoaded: make(chan struct{}),
 		registerer: prometheus.WrapRegistererWith(
-			nil,
-			nil),
+			prometheus.Labels{"receiver": set.ID.String()},
+			prometheus.DefaultRegisterer),
 		targetAllocatorManager: targetallocator.NewManager(
 			set,
 			cfg.TargetAllocator.Get(),
@@ -144,11 +144,13 @@ func (r *pReceiver) initPrometheusComponents(ctx context.Context, logger *slog.L
 	// Some SD mechanisms use the "refresh" package, which has its own metrics.
 	refreshSdMetrics := discovery.NewRefreshMetrics(r.registerer)
 
-	// Register the metrics specific for each SD mechanism, and the ones for the refresh package.
-	sdMetrics, err := discovery.RegisterSDMetrics(r.registerer, refreshSdMetrics)
-	if err != nil {
-		return fmt.Errorf("failed to register service discovery metrics: %w", err)
+	// Register the metrics for the service discovery mechanisms.
+	staticConfig := discovery.StaticConfig{}
+	discovererMetrics := staticConfig.NewDiscovererMetrics(r.registerer, refreshSdMetrics)
+	sdMetrics := map[string]discovery.DiscovererMetrics{
+		staticConfig.Name(): discovererMetrics,
 	}
+
 	r.discoveryManager = discovery.NewManager(ctx, logger, r.registerer, sdMetrics)
 	if r.discoveryManager == nil {
 		// NewManager can sometimes return nil if it encountered an error, but
@@ -156,6 +158,7 @@ func (r *pReceiver) initPrometheusComponents(ctx context.Context, logger *slog.L
 		return errors.New("failed to create discovery manager")
 	}
 
+	var err error
 	go func() {
 		r.settings.Logger.Info("Starting discovery manager")
 		if err = r.discoveryManager.Run(); err != nil && !errors.Is(err, context.Canceled) {
