@@ -85,17 +85,14 @@ func newPrometheusReceiver(set receiver.Settings, cfg *Config, next consumer.Met
 	}
 
 	baseCfg := promconfig.Config(*cfg.PrometheusConfig)
-	registry := prometheus.NewRegistry()
-	registerer := prometheus.WrapRegistererWith(
-		prometheus.Labels{"receiver": set.ID.String()},
-		registry)
 	pr := &pReceiver{
 		cfg:          cfg,
 		consumer:     next,
 		settings:     set,
 		configLoaded: make(chan struct{}),
-		registerer:   registerer,
-		registry:     registry,
+		registerer: prometheus.WrapRegistererWith(
+			nil,
+			nil),
 		targetAllocatorManager: targetallocator.NewManager(
 			set,
 			cfg.TargetAllocator.Get(),
