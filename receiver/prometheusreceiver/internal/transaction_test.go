@@ -274,7 +274,7 @@ func testTransactionAppendHistogramNoLe(t *testing.T) {
 	_, err := tr.Append(0, goodLabels, 0, 1917, 1.0, nil, nil, storage.AOptions{})
 	require.NoError(t, err)
 	assert.Equal(t, 1, observedLogs.Len())
-	assert.Equal(t, 1, observedLogs.FilterMessage("failed to add datapoint").Len())
+	assert.Equal(t, 1, observedLogs.FilterMessage("Histogram/Summary metric missing 'le' label").Len())
 
 	assert.NoError(t, tr.Commit())
 	assert.Empty(t, sink.AllMetrics())

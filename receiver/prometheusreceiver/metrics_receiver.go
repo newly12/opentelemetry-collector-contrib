@@ -278,8 +278,8 @@ func (r *pReceiver) initAPIServer(ctx context.Context, host component.Host) erro
 		Flags:          make(map[string]string),
 		MaxConnections: maxConnections,
 		IsAgent:        true,
-		Registerer:     r.registerer,
-		Gatherer:       r.registry,
+		Registerer:     prometheus.NewRegistry(),
+		Gatherer:       prometheus.DefaultGatherer,
 		CORSOrigin:     corsOriginRegexp,
 	}
 
