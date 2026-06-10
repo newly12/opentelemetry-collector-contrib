@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/multierr"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus"
+	prometheustranslator "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus"
 )
 
 // FromMetricsV2 converts pmetric.Metrics to Prometheus remote write format 2.0.
@@ -59,7 +59,10 @@ func newPrometheusConverterV2(settings Settings) *prometheusConverterV2 {
 		conflicts:   map[uint64][]*writev2.TimeSeries{},
 		symbolTable: writev2.NewSymbolTable(),
 		metricNamer: otlptranslator.MetricNamer{WithMetricSuffixes: settings.AddMetricSuffixes, Namespace: settings.Namespace},
-		labelNamer:  otlptranslator.LabelNamer{UnderscoreLabelSanitization: !prometheus.DropSanitizationGate.IsEnabled()},
+		labelNamer: otlptranslator.LabelNamer{
+			UnderscoreLabelSanitization: !prometheustranslator.DropSanitizationGate.IsEnabled(),
+			PreserveMultipleUnderscores: prometheustranslator.DropSanitizationGate.IsEnabled(),
+		},
 		unitNamer:   otlptranslator.UnitNamer{},
 	}
 }
