@@ -274,7 +274,7 @@ func (r *pReceiver) initAPIServer(ctx context.Context, host component.Host) erro
 		MaxConnections: maxConnections,
 		IsAgent:        true,
 		Registerer:     prometheus.NewRegistry(),
-		Gatherer:       prometheus.DefaultGatherer,
+		Gatherer:       r.registry,
 		CORSOrigin:     corsOriginRegexp,
 	}
 

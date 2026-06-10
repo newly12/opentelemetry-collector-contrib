@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric"
 	"go.uber.org/multierr"
 
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus"
+	prometheustranslator "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus"
 )
 
 type Settings struct {
@@ -81,8 +81,12 @@ func newPrometheusConverter(settings Settings) *prometheusConverter {
 		unique:      map[uint64]*prompb.TimeSeries{},
 		conflicts:   map[uint64][]*prompb.TimeSeries{},
 		metricNamer: otlptranslator.MetricNamer{WithMetricSuffixes: withSuffixes, Namespace: settings.Namespace, UTF8Allowed: utf8Allowed},
-		labelNamer:  otlptranslator.LabelNamer{UnderscoreLabelSanitization: !prometheus.DropSanitizationGate.IsEnabled(), UTF8Allowed: utf8Allowed},
-		unitNamer:   otlptranslator.UnitNamer{UTF8Allowed: utf8Allowed},
+		labelNamer: otlptranslator.LabelNamer{
+			UnderscoreLabelSanitization: !prometheustranslator.DropSanitizationGate.IsEnabled(),
+			PreserveMultipleUnderscores: prometheustranslator.DropSanitizationGate.IsEnabled(),
+			UTF8Allowed:                 utf8Allowed,
+		},
+		unitNamer: otlptranslator.UnitNamer{UTF8Allowed: utf8Allowed},
 	}
 }
 
